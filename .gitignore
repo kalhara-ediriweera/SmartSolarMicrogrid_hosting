@@ -1,0 +1,47 @@
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# .NET / ASP.NET build artifacts
+**/[Bb]in/
+**/[Oo]bj/
+**/.vs/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.pdb
+**/*.mdb
+**/*.log
+**/TestResults/
+**/packages/
+**/App_Data/
+
+# Local configuration and secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Node / frontend artifacts
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+.parcel-cache/
+.vite/
+*.tsbuildinfo
+
+# Package artifacts
+*.nupkg
+*.snupkg

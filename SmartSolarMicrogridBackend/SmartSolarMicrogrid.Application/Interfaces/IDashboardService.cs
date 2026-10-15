@@ -1,0 +1,1 @@
+using SmartSolarMicrogrid.Application.DTOs.Dashboard; namespace SmartSolarMicrogrid.Application.Interfaces; public interface IDashboardService { Task<ProsumerDashboardDto> ProsumerAsync(string nic); Task<OperatorDashboardDto> OperatorAsync(); Task<BackofficeDashboardDto> BackofficeAsync(); }

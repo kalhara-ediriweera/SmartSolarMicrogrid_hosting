@@ -1,0 +1,1 @@
+using SmartSolarMicrogrid.Application.DTOs.Auth; namespace SmartSolarMicrogrid.Application.Interfaces; public interface IAuthService { Task<LoginResponseDto> LoginAsync(LoginRequestDto request); }

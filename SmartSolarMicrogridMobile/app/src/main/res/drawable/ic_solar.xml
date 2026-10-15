@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solar panel sun icon in vector format -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Sun rays -->
+    <path android:fillColor="#F4A829"
+        android:pathData="M32,6 L34,14 L30,14 Z
+                          M32,50 L34,58 L30,58 Z
+                          M6,32 L14,30 L14,34 Z
+                          M50,32 L58,34 L58,30 Z
+                          M13.37,13.37 L19.07,19.07 L16.25,21.89 Z
+                          M50.63,50.63 L44.93,44.93 L47.75,42.11 Z
+                          M50.63,13.37 L44.93,19.07 L47.75,21.89 Z
+                          M13.37,50.63 L19.07,44.93 L16.25,42.11 Z"/>
+
+    <!-- Sun circle -->
+    <path android:fillColor="#F4A829"
+        android:pathData="M32,20 A12,12 0 1,1 31.99,20 Z"/>
+
+    <!-- Solar panel grid -->
+    <path android:fillColor="#1B6B4A"
+        android:pathData="M18,36 L46,36 L46,54 L18,54 Z"/>
+    <path android:fillColor="#FFFFFF" android:strokeWidth="0.8"
+        android:pathData="M18,42 L46,42 M18,48 L46,48 M26,36 L26,54 M34,36 L34,54 M42,36 L42,54"/>
+    <path android:fillColor="#2E8B5A"
+        android:pathData="M18,36 L46,36 L46,38 L18,38 Z"/>
+</vector>

@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <!-- Location & Icons Header -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_header_gradient"
+        android:padding="16dp"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/ivLocation"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_centerVertical="true"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:tint="@color/on_primary" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/ivLocation"
+            android:layout_toStartOf="@+id/iconContainer"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical"
+            android:layout_centerVertical="true">
+            
+            <TextView
+                android:id="@+id/tvUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Prosumer Name"
+                android:textColor="@color/on_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connected to microgrid"
+                android:textColor="@color/on_primary"
+                android:alpha="0.8"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal">
+            
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_logo_circle"
+                android:backgroundTint="#33FFFFFF"
+                android:elevation="0dp"
+                android:layout_marginEnd="8dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_popup_reminder"
+                    app:tint="@color/on_primary" />
+            </FrameLayout>
+            
+            <FrameLayout
+                android:id="@+id/btnLogout"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_logo_circle"
+                android:backgroundTint="#33FFFFFF"
+                android:elevation="0dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_manage"
+                    app:tint="@color/on_primary" />
+            </FrameLayout>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+
+
+            <!-- Search Bar -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/surface"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/divider">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+                    
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="@color/on_surface_variant" />
+                        
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:text="Search for energy trades or buyers..."
+                        android:textColor="@color/on_surface_variant"
+                        android:textSize="14sp" />
+                        
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        app:tint="@color/on_surface_variant" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Hero Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                android:backgroundTint="@android:color/transparent">
+                
+                <ViewFlipper
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autoStart="true"
+                    android:flipInterval="3000"
+                    android:inAnimation="@android:anim/fade_in"
+                    android:outAnimation="@android:anim/fade_out">
+                    
+                    <!-- Banner 1: Sell Excess Energy -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_header_gradient">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Excess Solar Energy?"
+                                android:textColor="#E0FFFFFF"
+                                android:textSize="14sp" />
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Sell it to the grid fast."
+                                android:textColor="#FFFFFF"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+                                
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="⚡ Instant payout in 30 mins"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="✅ Verified local buyers"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="16dp">
+                                
+                                <com.google.android.material.button.MaterialButton
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:text="Sell Now"
+                                    android:textColor="@color/primary"
+                                    app:backgroundTint="#FFFFFF"
+                                    app:cornerRadius="20dp"
+                                    android:textSize="12sp"
+                                    app:icon="@android:drawable/ic_menu_send"
+                                    app:iconTint="@color/primary"/>
+                                    
+                                <com.google.android.material.button.MaterialButton
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:layout_marginStart="12dp"
+                                    android:text="Schedule"
+                                    android:textColor="#FFFFFF"
+                                    app:backgroundTint="#40FFFFFF"
+                                    app:cornerRadius="20dp"
+                                    android:textSize="12sp"
+                                    app:strokeWidth="1dp"
+                                    app:strokeColor="#FFFFFF"
+                                    app:icon="@android:drawable/ic_menu_agenda"
+                                    app:iconTint="#FFFFFF"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </RelativeLayout>
+
+                    <!-- Banner 2: Go Green -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_header_gradient">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Community Energy"
+                                android:textColor="#E0FFFFFF"
+                                android:textSize="14sp" />
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Join the Green Movement."
+                                android:textColor="#FFFFFF"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+                                
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🌍 Reduce carbon footprint"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="⭐ Earn community rewards"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="16dp">
+                                
+                                <com.google.android.material.button.MaterialButton
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:text="View Rewards"
+                                    android:textColor="@color/primary"
+                                    app:backgroundTint="#FFFFFF"
+                                    app:cornerRadius="20dp"
+                                    android:textSize="12sp"
+                                    app:icon="@android:drawable/btn_star"
+                                    app:iconTint="@color/primary"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </RelativeLayout>
+
+                    <!-- Banner 3: Track Savings -->
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_header_gradient">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Track Your Savings"
+                                android:textColor="#E0FFFFFF"
+                                android:textSize="14sp" />
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="See real-time analytics."
+                                android:textColor="#FFFFFF"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+                                
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📊 Daily generation stats"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="💰 Total income tracking"
+                                    android:textColor="#E0FFFFFF"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="16dp">
+                                
+                                <com.google.android.material.button.MaterialButton
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:text="View Analytics"
+                                    android:textColor="@color/primary"
+                                    app:backgroundTint="#FFFFFF"
+                                    app:cornerRadius="20dp"
+                                    android:textSize="12sp"
+                                    app:icon="@android:drawable/ic_menu_sort_by_size"
+                                    app:iconTint="@color/primary"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </RelativeLayout>
+                </ViewFlipper>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Quick Actions Grid -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="My Energy Services"
+                    android:textColor="@color/on_surface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="See all >"
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+            
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:columnCount="4"
+                android:rowCount="2"
+                android:alignmentMode="alignMargins"
+                android:useDefaultMargins="true">
+                
+                <!-- Action 1: Book Slot -->
+                <LinearLayout android:id="@+id/btnBookSlot" android:orientation="vertical" android:gravity="center" android:layout_columnWeight="1" android:clipToPadding="false" android:padding="4dp">
+                    <FrameLayout android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_stat_chip" android:backgroundTint="@color/surface" android:elevation="6dp">
+                        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@android:drawable/ic_menu_add" app:tint="@color/primary" />
+                    </FrameLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Book Slot" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="8dp" android:textColor="@color/on_surface" android:textAlignment="center"/>
+                </LinearLayout>
+
+                <!-- Action 2: My Bookings -->
+                <LinearLayout android:id="@+id/btnMyBookings" android:orientation="vertical" android:gravity="center" android:layout_columnWeight="1" android:clipToPadding="false" android:padding="4dp">
+                    <FrameLayout android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_stat_chip" android:backgroundTint="@color/surface" android:elevation="6dp">
+                        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@android:drawable/ic_menu_agenda" app:tint="@color/primary" />
+                    </FrameLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Bookings" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="8dp" android:textColor="@color/on_surface" android:textAlignment="center"/>
+                </LinearLayout>
+
+                <!-- Action 3: Grid Map -->
+                <LinearLayout android:id="@+id/btnGridMap" android:orientation="vertical" android:gravity="center" android:layout_columnWeight="1" android:clipToPadding="false" android:padding="4dp">
+                    <FrameLayout android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_stat_chip" android:backgroundTint="@color/surface" android:elevation="6dp">
+                        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@android:drawable/ic_menu_mapmode" app:tint="@color/primary" />
+                    </FrameLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Grid Map" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="8dp" android:textColor="@color/on_surface" android:textAlignment="center"/>
+                </LinearLayout>
+
+                <!-- Action 4: My Profile -->
+                <LinearLayout android:id="@+id/btnMyProfile" android:orientation="vertical" android:gravity="center" android:layout_columnWeight="1" android:clipToPadding="false" android:padding="4dp">
+                    <FrameLayout android:layout_width="60dp" android:layout_height="60dp" android:background="@drawable/bg_stat_chip" android:backgroundTint="@color/surface" android:elevation="6dp">
+                        <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:src="@android:drawable/ic_menu_my_calendar" app:tint="@color/primary" />
+                    </FrameLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="8dp" android:textColor="@color/on_surface" android:textAlignment="center"/>
+                </LinearLayout>
+            </GridLayout>
+
+            <!-- Recommended section -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Account Options"
+                    android:textColor="@color/on_surface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="View all >"
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+            <!-- Horizontal Scroll Cards -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:clipToPadding="false"
+                android:paddingEnd="16dp"
+                android:scrollbars="none">
+                
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    
+                    <!-- Card 1: QR Code -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnQrCode"
+                        android:layout_width="220dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="8dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="3dp"
+                        app:cardBackgroundColor="@color/surface">
+                        
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+                            
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="100dp"
+                                android:background="#E0E4E2">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_stat_chip"
+                                    android:backgroundTint="#FFFFFF"
+                                    android:text="Generate"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/on_surface"
+                                    android:padding="4dp"
+                                    android:layout_margin="8dp" />
+                                <ImageView
+                                    android:layout_width="48dp"
+                                    android:layout_height="48dp"
+                                    android:layout_gravity="center"
+                                    android:src="@android:drawable/ic_menu_share"
+                                    app:tint="@color/outline" />
+                            </FrameLayout>
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp">
+                                
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Transaction QR Code"
+                                    android:textColor="@color/on_surface"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                                    
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:layout_marginTop="4dp"
+                                    android:gravity="center_vertical">
+                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Show to Operator" android:textSize="12sp" android:textColor="@color/on_surface_variant" />
+                                </LinearLayout>
+                                    
+                                <RelativeLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="16dp">
+                                        
+                                    <com.google.android.material.button.MaterialButton
+                                        android:layout_width="match_parent"
+                                        android:layout_height="36dp"
+                                        android:text="View QR"
+                                        app:cornerRadius="8dp"
+                                        android:textSize="11sp" 
+                                        android:clickable="false" />
+                                </RelativeLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/contentLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"/>
+                
+            <!-- Hidden elements to satisfy Java bindings -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+                <TextView android:id="@+id/tvStatActive" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvStatPending" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <TextView android:id="@+id/tvStatCompleted" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+                
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        app:elevation="8dp"
+        app:menu="@menu/bottom_nav_menu" />
+
+</LinearLayout>

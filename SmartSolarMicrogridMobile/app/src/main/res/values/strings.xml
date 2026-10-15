@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart Solar Microgrid</string>
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Sign in to your solar account</string>
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Join the solar energy network</string>
+    <string name="btn_login">Sign In</string>
+    <string name="btn_register">Create Account</string>
+    <string name="btn_logout">Log Out</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_nic">NIC Number</string>
+    <string name="hint_fullname">Full Name</string>
+    <string name="hint_email">Email Address</string>
+    <string name="hint_phone">Phone Number</string>
+    <string name="hint_address">Address</string>
+    <string name="prosumer_dashboard">My Solar Dashboard</string>
+    <string name="operator_dashboard">Operations Dashboard</string>
+    <string name="loading">Loading…</string>
+    <string name="app_tagline">Powering a greener tomorrow</string>
+</resources>

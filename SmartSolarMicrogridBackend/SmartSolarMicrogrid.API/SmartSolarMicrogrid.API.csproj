@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SmartSolarMicrogrid.Application\SmartSolarMicrogrid.Application.csproj" />
+    <ProjectReference Include="..\SmartSolarMicrogrid.Infrastructure\SmartSolarMicrogrid.Infrastructure.csproj" />
+    <ProjectReference Include="..\SmartSolarMicrogrid.Domain\SmartSolarMicrogrid.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.19" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+  </ItemGroup>
+</Project>

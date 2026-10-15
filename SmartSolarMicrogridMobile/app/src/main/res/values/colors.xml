@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Green (Solid elements, text on light backgrounds) -->
+    <color name="primary">#2E7D32</color> 
+    <color name="primary_dark">#1B5E20</color> 
+    <color name="primary_light">#E8F5E9</color> <!-- Very light green for chips -->
+    <color name="primary_container">#81C784</color> <!-- Soft green -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_primary_container">#111A14</color>
+
+    <!-- Secondary (Mint / Accent) -->
+    <color name="secondary">#62D28E</color> 
+    <color name="secondary_container">#E8F5E9</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_secondary_container">#1B5E20</color>
+
+    <!-- Background / surface (Light theme) -->
+    <color name="bg">#EBF5EC</color> <!-- Very light green for app background -->
+    <color name="surface">#FFFFFF</color> <!-- White cards -->
+    <color name="surface_variant">#EAEEEB</color>
+    <color name="on_surface">#1A211D</color> <!-- Dark text -->
+    <color name="on_surface_variant">#616D66</color> <!-- Grey text for subtitles -->
+    <color name="outline">#C2C8C4</color>
+
+    <!-- Error -->
+    <color name="error">#D32F2F</color>
+    <color name="error_container">#FFEBEE</color>
+
+    <!-- Gradient stops for a stunning header (Light to Dark Green) -->
+    <color name="gradient_start">#81C784</color>
+    <color name="gradient_end">#2E7D32</color>
+
+    <!-- Card shadow / divider -->
+    <color name="divider">#E0E4E2</color>
+    <color name="card_bg">#FFFFFF</color>
+
+    <!-- Status colors -->
+    <color name="status_pending">#F57C00</color> 
+    <color name="status_approved">#2E7D32</color> 
+    <color name="status_completed">#1976D2</color>
+    <color name="status_cancelled">#D32F2F</color>
+</resources>

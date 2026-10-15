@@ -1,0 +1,7 @@
+import { useEffect, useRef, useState } from "react";
+import { Sun, LayoutDashboard, Users, MapPin, Battery, CalendarDays, QrCode, LogOut, Menu, X, ShieldCheck, Activity, UserPlus, Eye, EyeOff, AlertTriangle, Search, Navigation, Crosshair, ExternalLink, CheckCircle2, Loader2, Map, Compass, Check, AlertCircle } from "lucide-react";
+import Title from "../../components/common/PageTitle";
+import Table from "../../components/common/DataTable";
+import * as bookingService from "../../services/bookingService";
+
+export default function Res(){const[st,setSt]=useState("Pending"),[a,setA]=useState([]);const load=()=>bookingService.getReservations(st).then(x=>setA(x.data));useEffect(()=>{load();},[st]);return <><Title t="Reservations" d="Monitor and approve reservation workflow"/><Table><div className="tabs">{["Pending","Approved","Completed","Cancelled"].map(x=><button className={st===x?"selected":""} onClick={()=>setSt(x)} key={x}>{x}</button>)}</div><table><thead><tr><th>Code</th><th>Date</th><th>Time</th><th>Energy</th><th>Status</th><th/></tr></thead><tbody>{a.map(r=><tr key={r.id}><td>{r.reservationCode}</td><td>{new Date(r.reservationDate).toLocaleDateString()}</td><td>{r.startTime}–{r.endTime}</td><td>{r.energyAmountKwh} kWh</td><td><span className="badge">{r.status}</span></td><td>{st==="Pending"&&<button className="btn-success" onClick={async()=>{await bookingService.approveReservation(r.id);load()}}>Approve</button>}</td></tr>)}</tbody></table></Table></>}

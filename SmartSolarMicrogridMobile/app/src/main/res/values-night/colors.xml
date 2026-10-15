@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Green (Vibrant Neon Mint for dark mode accents) -->
+    <color name="primary">#00E676</color> 
+    <color name="primary_dark">#00C853</color> 
+    <color name="primary_light">#69F0AE</color> 
+    <color name="primary_container">#1A4027</color> 
+    <color name="on_primary">#000000</color>
+    <color name="on_primary_container">#B9F6CA</color>
+
+    <!-- Secondary -->
+    <color name="secondary">#00E676</color> 
+    <color name="secondary_container">#004D40</color>
+    <color name="on_secondary">#000000</color>
+    <color name="on_secondary_container">#80CBC4</color>
+
+    <!-- Background / surface (Soft Charcoal/Slate Gray) -->
+    <color name="bg">#202124</color> <!-- Soft Google Dark Mode gray background -->
+    <color name="surface">#282A2D</color> <!-- Lighter slate for cards -->
+    <color name="surface_variant">#3C4043</color>
+    <color name="on_surface">#F1F3F4</color> <!-- Off-white crisp text -->
+    <color name="on_surface_variant">#9AA0A6</color> <!-- Light gray text for subtitles -->
+    <color name="outline">#5F6368</color>
+
+    <!-- Error -->
+    <color name="error">#FF5252</color>
+    <color name="error_container">#5C1A1A</color>
+
+    <!-- Gradient stops for header (Soft dark teal-slate) -->
+    <color name="gradient_start">#2C3A32</color>
+    <color name="gradient_end">#202A24</color>
+
+    <!-- Card shadow / divider -->
+    <color name="divider">#3C4043</color>
+    <color name="card_bg">#282A2D</color>
+
+    <!-- Status colors -->
+    <color name="status_pending">#FFB74D</color> 
+    <color name="status_approved">#00E676</color> 
+    <color name="status_completed">#64B5F6</color>
+    <color name="status_cancelled">#FF5252</color>
+</resources>

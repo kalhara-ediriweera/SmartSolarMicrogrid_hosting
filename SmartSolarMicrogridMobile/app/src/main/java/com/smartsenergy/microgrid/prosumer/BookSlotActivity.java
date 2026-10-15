@@ -3,6 +3,7 @@ package com.smartsenergy.microgrid.prosumer;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -27,22 +28,67 @@ import retrofit2.Response;
 public class BookSlotActivity extends BaseActivity {
 
     private LinearLayout slotsContainer;
+    private String filterNodeId = "";
+    private String filterNodeName = "";
+    private MaterialCardView cardFilterNode;
+    private TextView tvFilterNodeName;
+    private TextView tvSlotsHeader;
+    private MaterialButton btnClearFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_book_slot);
 
+        filterNodeId = getIntent().getStringExtra("nodeId");
+        if (filterNodeId == null) filterNodeId = "";
+        filterNodeName = getIntent().getStringExtra("nodeName");
+        if (filterNodeName == null) filterNodeName = "";
+
         slotsContainer = findViewById(R.id.slotsContainer);
+        cardFilterNode = findViewById(R.id.cardFilterNode);
+        tvFilterNodeName = findViewById(R.id.tvFilterNodeName);
+        tvSlotsHeader = findViewById(R.id.tvSlotsHeader);
+        btnClearFilter = findViewById(R.id.btnClearFilter);
+
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
+        if (btnClearFilter != null) {
+            btnClearFilter.setOnClickListener(v -> {
+                filterNodeId = "";
+                filterNodeName = "";
+                updateFilterUi();
+                loadSlots();
+            });
+        }
+
+        updateFilterUi();
         setupBottomNav(R.id.nav_home);
         loadSlots();
     }
 
+    private void updateFilterUi() {
+        if (!filterNodeId.isEmpty()) {
+            if (cardFilterNode != null) cardFilterNode.setVisibility(View.VISIBLE);
+            if (tvFilterNodeName != null) {
+                String label = !filterNodeName.isEmpty() ? filterNodeName : "Selected Station";
+                tvFilterNodeName.setText("📍 Station: " + label);
+            }
+            if (tvSlotsHeader != null) {
+                tvSlotsHeader.setText("Available Slots for " + (!filterNodeName.isEmpty() ? filterNodeName : "Station"));
+            }
+        } else {
+            if (cardFilterNode != null) cardFilterNode.setVisibility(View.GONE);
+            if (tvSlotsHeader != null) {
+                tvSlotsHeader.setText("All Available Slots");
+            }
+        }
+    }
+
     private void loadSlots() {
         showLoading();
-        ApiClient.get().slots("", true).enqueue(new Callback<JsonElement>() {
+        slotsContainer.removeAllViews();
+        ApiClient.get().slots(filterNodeId, true).enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideLoading();
@@ -51,10 +97,40 @@ public class BookSlotActivity extends BaseActivity {
                 slotsContainer.removeAllViews();
                 
                 if (a.size() == 0) {
+                    LinearLayout emptyBox = new LinearLayout(BookSlotActivity.this);
+                    emptyBox.setOrientation(LinearLayout.VERTICAL);
+                    emptyBox.setPadding(32, 48, 32, 32);
+                    emptyBox.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+
                     TextView tv = new TextView(BookSlotActivity.this);
-                    tv.setText("No available slots found at this time.");
+                    if (!filterNodeId.isEmpty()) {
+                        String stName = !filterNodeName.isEmpty() ? filterNodeName : "this station";
+                        tv.setText("No available slots found for " + stName + " at this time.");
+                    } else {
+                        tv.setText("No available slots found across all stations at this time.");
+                    }
+                    tv.setTextSize(15f);
                     tv.setTextColor(Color.GRAY);
-                    slotsContainer.addView(tv);
+                    tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    emptyBox.addView(tv);
+
+                    if (!filterNodeId.isEmpty()) {
+                        MaterialButton btnShowAll = new MaterialButton(BookSlotActivity.this);
+                        btnShowAll.setText("View Slots for All Stations");
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        lp.topMargin = 32;
+                        btnShowAll.setLayoutParams(lp);
+                        btnShowAll.setOnClickListener(v -> {
+                            filterNodeId = "";
+                            filterNodeName = "";
+                            updateFilterUi();
+                            loadSlots();
+                        });
+                        emptyBox.addView(btnShowAll);
+                    }
+
+                    slotsContainer.addView(emptyBox);
                     return;
                 }
 

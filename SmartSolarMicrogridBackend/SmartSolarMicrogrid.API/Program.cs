@@ -60,9 +60,9 @@ builder.Services.AddSwaggerGen(c=>{
 builder.Services.AddCors(o=>o.AddPolicy("Clients",p=>p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app=builder.Build();
+app.UseCors("Clients");
 app.UseMiddleware<ExceptionMiddleware>();
 if(app.Environment.IsDevelopment()){app.UseSwagger();app.UseSwaggerUI();}
-app.UseCors("Clients");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

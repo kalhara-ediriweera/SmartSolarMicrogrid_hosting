@@ -49,14 +49,14 @@ public class ProsumerDashboardActivity extends BaseActivity {
         tvUsername.setText(session.username() + " · " + session.nic());
 
         android.view.View btnLogout = findViewById(R.id.btnLogout);
-        btnLogout.setOnClickListener(v -> doLogout());
+        btnLogout.setOnClickListener(v -> confirmLogout());
 
         // Map real features to new UI grid and scroll cards
         findViewById(R.id.btnBookSlot).setOnClickListener(v -> startActivity(new Intent(this, BookSlotActivity.class)));
         findViewById(R.id.btnMyBookings).setOnClickListener(v -> startActivity(new Intent(this, BookingsActivity.class)));
         findViewById(R.id.btnGridMap).setOnClickListener(v -> startActivity(new Intent(this, com.smartsolar.microgrid.ui.MapActivity.class)));
         findViewById(R.id.btnMyProfile).setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
-        findViewById(R.id.btnQrCode).setOnClickListener(v -> filterBookings());
+        findViewById(R.id.btnQrCode).setOnClickListener(v -> openQrFlow());
         // btnDeactivate removed from dashboard layout
 
         setupBottomNav(R.id.nav_home);
@@ -338,13 +338,66 @@ public class ProsumerDashboardActivity extends BaseActivity {
     }
 
     // ── QR ─────────────────────────────────────────────────
+    private void openQrFlow() {
+        showLoading();
+        ApiClient.get().myReservations(session.nic(), "", "Approved").enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
+                hideLoading();
+                if (!r.isSuccessful() || r.body() == null) {
+                    toast(errorMsg(r));
+                    return;
+                }
+                JsonArray arr = r.body().getAsJsonArray();
+                if (arr.size() == 0) {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(ProsumerDashboardActivity.this,
+                            com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                            .setTitle("No Approved Bookings")
+                            .setMessage("You don't have any approved reservations yet. QR codes are generated after your reservation is approved by the backoffice.")
+                            .setPositiveButton("View All Bookings", (d, w) -> startActivity(new Intent(ProsumerDashboardActivity.this, BookingsActivity.class)))
+                            .setNegativeButton("Close", null)
+                            .show();
+                    return;
+                }
+
+                if (arr.size() == 1) {
+                    JsonObject res = arr.get(0).getAsJsonObject();
+                    generateQr(ApiUtils.str(res, "id"));
+                } else {
+                    String[] items = new String[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        JsonObject obj = arr.get(i).getAsJsonObject();
+                        items[i] = "🔖 " + ApiUtils.str(obj, "reservationCode") + " · "
+                                + shortDate(ApiUtils.str(obj, "reservationDate")) + " ("
+                                + fmt(ApiUtils.num(obj, "energyAmountKwh")) + " kWh)";
+                    }
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(ProsumerDashboardActivity.this,
+                            com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                            .setTitle("Select Approved Booking")
+                            .setItems(items, (d, w) -> {
+                                JsonObject chosen = arr.get(w).getAsJsonObject();
+                                generateQr(ApiUtils.str(chosen, "id"));
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> c, Throwable t) {
+                hideLoading();
+                fail(t);
+            }
+        });
+    }
+
     private void generateQr(String reservationId) {
         showLoading();
         ApiClient.get().generateQr(reservationId).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
                 hideLoading();
-                if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
+                if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
                 showQr(r.body());
             }
             @Override
@@ -354,21 +407,26 @@ public class ProsumerDashboardActivity extends BaseActivity {
 
     private void showQr(JsonObject q) {
         String token = ApiUtils.str(q, "qrToken");
+        if (token.isEmpty()) token = ApiUtils.str(q, "token");
+        if (token.isEmpty()) token = ApiUtils.str(q, "qrData");
+
+        String txCode = ApiUtils.str(q, "transactionCode");
+
         ImageView img = new ImageView(this);
-        img.setPadding(16, 16, 16, 16);
+        img.setPadding(32, 32, 32, 32);
         try {
-            BitMatrix m = new QRCodeWriter().encode(token, BarcodeFormat.QR_CODE, 700, 700);
-            Bitmap bmp  = Bitmap.createBitmap(700, 700, Bitmap.Config.RGB_565);
-            for (int x = 0; x < 700; x++)
-                for (int y = 0; y < 700; y++)
+            BitMatrix m = new QRCodeWriter().encode(token, BarcodeFormat.QR_CODE, 650, 650);
+            Bitmap bmp  = Bitmap.createBitmap(650, 650, Bitmap.Config.RGB_565);
+            for (int x = 0; x < 650; x++)
+                for (int y = 0; y < 650; y++)
                     bmp.setPixel(x, y, m.get(x, y) ? Color.BLACK : Color.WHITE);
             img.setImageBitmap(bmp);
-        } catch (Exception e) { toast("QR generation error"); return; }
+        } catch (Exception e) { toast("QR generation error: " + e.getMessage()); return; }
 
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
                 .setTitle("Transaction QR Code")
-                .setMessage("📋 " + ApiUtils.str(q, "transactionCode")
-                        + "\n\nShow this QR to the Grid Operator at the charging station.")
+                .setMessage("📋 Code: " + txCode
+                        + "\n\nShow this QR to the Grid Operator at the charging station to complete energy transfer.")
                 .setView(img)
                 .setPositiveButton("Done", null)
                 .show();

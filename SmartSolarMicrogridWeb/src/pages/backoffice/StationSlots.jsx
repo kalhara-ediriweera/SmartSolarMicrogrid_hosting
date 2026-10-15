@@ -8,21 +8,56 @@ import SlotRequestsPanel from "../../components/backoffice/SlotRequestsPanel";
 
 export default function Slots(){
     const empty = {nodeId:"",slotDate:"",startTime:"08:00",endTime:"09:00",energyAmountKwh:"",availableCapacityKwh:"",status:"Available"};
-    const [f,setF]=useState(empty),[nodes,setN]=useState([]),[a,setA]=useState([]),[edit,setEdit]=useState(null),[err,setErr]=useState("");
+    const [f,setF]=useState(empty),[nodes,setN]=useState([]),[a,setA]=useState([]),[edit,setEdit]=useState(null),[originalSlot,setOriginalSlot]=useState(null),[err,setErr]=useState("");
     const [search, setSearch] = useState("");
 
-    const load=()=>Promise.all([stationService.getStations(),bookingService.getEnergySlots()]).then(([n,s])=>{setN(n.data);setA(s.data)});
-    useEffect(()=>{load();},[]);
+    const load = () => Promise.all([stationService.getStations(), bookingService.getEnergySlots()])
+        .then(([n, s]) => {
+            setN(n.data || []);
+            setA(s.data || []);
+        })
+        .catch((x) => {
+            setErr(x.response?.data?.error || "Failed to load energy slots and stations data.");
+        });
+    useEffect(() => { load(); }, []);
 
     const selectedNode = nodes.find(n => n.id === f.nodeId);
     const isSelectedNodeInactive = selectedNode && selectedNode.status !== 0 && selectedNode.status !== "Active";
+    const reservedAmount = (edit && originalSlot) ? Math.max(0, (originalSlot.energyAmountKwh || 0) - (originalSlot.availableCapacityKwh || 0)) : 0;
 
     async function go(e){
         e.preventDefault();
+        setErr("");
         if (edit && isSelectedNodeInactive && f.status === "Available") {
             setErr(`Cannot set slot status to Available because microgrid node '${selectedNode.nodeName}' is deactivated (${selectedNode.adminNote || "Inactive"}).`);
             return;
         }
+
+        // Duplicate check when creating a new slot on same node, date, and time range
+        if (!edit) {
+            const formattedDate = new Date(f.slotDate).toISOString().split('T')[0];
+            const duplicate = a.find(s => 
+                s.nodeId === f.nodeId &&
+                new Date(s.slotDate).toISOString().split('T')[0] === formattedDate &&
+                s.startTime.trim() === f.startTime.trim() &&
+                s.endTime.trim() === f.endTime.trim()
+            );
+
+            if (duplicate) {
+                const nodeName = selectedNode ? selectedNode.nodeName : "this station";
+                setErr(`An energy slot already exists for station '${nodeName}' on ${formattedDate} (${f.startTime} - ${f.endTime}). Please edit the existing slot to update its energy amount instead of creating a duplicate.`);
+                return;
+            }
+        }
+
+        // Check that total energy cannot be reduced below already reserved energy
+        if (edit && originalSlot) {
+            if (+f.energyAmountKwh < reservedAmount) {
+                setErr(`Cannot reduce total energy (${f.energyAmountKwh} kWh) below already reserved energy (${reservedAmount.toFixed(1)} kWh).`);
+                return;
+            }
+        }
+
         try {
             const b = {...f, energyAmountKwh: +f.energyAmountKwh, slotDate: new Date(f.slotDate).toISOString()};
             if (edit) {
@@ -32,13 +67,17 @@ export default function Slots(){
             } else {
                 await bookingService.createEnergySlot(b);
             }
-            setEdit(null); setF(empty); setErr(""); load();
-        } catch(x) { setErr(x.response?.data?.error || "Failed to save slot. Check inputs."); }
+            setEdit(null); setOriginalSlot(null); setF(empty); setErr(""); load();
+        } catch(x) { 
+            const errorMsg = x.response?.data?.error || x.response?.data?.message || (typeof x.response?.data === 'string' ? x.response.data : "Failed to save slot. Check inputs.");
+            setErr(errorMsg); 
+        }
     }
 
     function startEdit(s) {
         const statuses = ["Available", "Reserved", "Unavailable", "Completed"];
         setEdit(s.id);
+        setOriginalSlot(s);
         const nodeForSlot = nodes.find(n => n.id === s.nodeId);
         const rawStatus = typeof s.status === 'number' ? statuses[s.status] : s.status;
         setF({
@@ -51,6 +90,24 @@ export default function Slots(){
             status: (nodeForSlot && nodeForSlot.status !== 0 && nodeForSlot.status !== "Active" && rawStatus === "Available") ? "Unavailable" : rawStatus
         });
         setErr("");
+    }
+
+    function handleTotalEnergyChange(newTotal) {
+        if (edit && originalSlot) {
+            const reserved = Math.max(0, (originalSlot.energyAmountKwh || 0) - (originalSlot.availableCapacityKwh || 0));
+            const autoAvailable = Math.max(0, (+newTotal || 0) - reserved);
+            setF({
+                ...f,
+                energyAmountKwh: newTotal,
+                availableCapacityKwh: Number(autoAvailable.toFixed(2))
+            });
+        } else {
+            setF({
+                ...f,
+                energyAmountKwh: newTotal,
+                availableCapacityKwh: newTotal
+            });
+        }
     }
 
     const filteredSlots = a.filter(s => {
@@ -103,20 +160,34 @@ export default function Slots(){
                 <label>Date<input required type="date" value={f.slotDate} onChange={e=>setF({...f,slotDate:e.target.value})}/></label>
                 <label>Start<input type="time" required value={f.startTime} onChange={e=>setF({...f,startTime:e.target.value})}/></label>
                 <label>End<input type="time" required value={f.endTime} onChange={e=>setF({...f,endTime:e.target.value})}/></label>
-                <label>Total Energy (kWh)<input required type="number" min="0.1" step="0.1" value={f.energyAmountKwh} onChange={e=>setF({...f,energyAmountKwh:e.target.value})}/></label>
+                <label>Total Energy (kWh)
+                    <input
+                        required
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={f.energyAmountKwh}
+                        onChange={e=>handleTotalEnergyChange(e.target.value)}
+                    />
+                </label>
                 {edit && (
                     <>
                         <label>Available (kWh)
                             <input
-                                required
+                                readOnly
+                                disabled
                                 type="number"
-                                min="0"
-                                step="0.1"
-                                max={f.energyAmountKwh}
                                 value={f.availableCapacityKwh}
-                                disabled={isSelectedNodeInactive}
-                                onChange={e=>setF({...f,availableCapacityKwh:e.target.value})}
+                                style={{
+                                    backgroundColor: "rgba(148, 163, 184, 0.1)",
+                                    cursor: "not-allowed",
+                                    color: "#94a3b8",
+                                    borderColor: "rgba(148, 163, 184, 0.25)"
+                                }}
                             />
+                            <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
+                                🔒 Automatically managed based on reservations ({reservedAmount > 0 ? `${reservedAmount.toFixed(1)} kWh currently reserved` : "No reservations yet"}).
+                            </span>
                         </label>
                         <label>Status
                             <select
@@ -134,7 +205,7 @@ export default function Slots(){
                 )}
                 <div className="form-actions">
                     <button type="submit" style={{flex:1}}>{edit ? "Update Slot" : "Create Slot"}</button>
-                    {edit && <button type="button" onClick={() => { setEdit(null); setF(empty); setErr(""); }} style={{background:"#94a3b8",flex:1}}>Cancel</button>}
+                    {edit && <button type="button" onClick={() => { setEdit(null); setOriginalSlot(null); setF(empty); setErr(""); }} style={{background:"#94a3b8",flex:1}}>Cancel</button>}
                 </div>
             </form>
 

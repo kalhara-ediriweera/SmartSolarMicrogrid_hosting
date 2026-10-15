@@ -19,14 +19,28 @@
         <activity android:name="com.smartsenergy.microgrid.prosumer.BookingsActivity" android:exported="false" />
         <activity android:name="com.smartsenergy.microgrid.operator.OperatorReservationsActivity" android:exported="false" />
         <activity android:name="com.smartsenergy.microgrid.operator.OperatorSlotsActivity" android:exported="false" />
+        <activity android:name="com.smartsenergy.microgrid.prosumer.ProsumerDashboardActivity" android:exported="false" />
+        <activity android:name="com.smartsenergy.microgrid.operator.OperatorDashboardActivity" android:exported="false" />
         <activity android:name=".ui.OperatorActivity" android:exported="false" />
         <activity android:name=".ui.ProsumerActivity" android:exported="false" />
         <activity android:name=".ui.RegisterActivity" android:exported="false" />
-        <activity android:name=".ui.LoginActivity" android:exported="true">
+        <activity
+            android:name="com.smartsenergy.microgrid.auth.LoginActivity"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name=".ui.LoginActivity"
+            android:targetActivity="com.smartsenergy.microgrid.auth.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 </manifest>
 

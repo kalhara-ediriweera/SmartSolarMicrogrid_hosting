@@ -13,11 +13,23 @@ public class EnergySlotService : IEnergySlotService {
         if(node.Status!=NodeStatus.Active)throw new InvalidOperationException("Cannot create slot for inactive node.");
         Validation.Positive(d.EnergyAmountKwh,"EnergyAmountKwh");
         if(d.SlotDate.Date < DateTime.UtcNow.Date || d.SlotDate.Date > DateTime.UtcNow.Date.AddDays(7))throw new ArgumentException("Slot must be within the allowed 7-day period.");
+
+        var allSlots = await _slots.GetAllAsync();
+        var duplicate = allSlots.FirstOrDefault(x =>
+            x.NodeId == d.NodeId &&
+            x.SlotDate.Date == d.SlotDate.Date &&
+            x.StartTime.Trim() == d.StartTime.Trim() &&
+            x.EndTime.Trim() == d.EndTime.Trim());
+
+        if (duplicate != null) {
+            throw new InvalidOperationException($"An energy slot already exists for station '{node.NodeName}' on {d.SlotDate:yyyy-MM-dd} ({d.StartTime} - {d.EndTime}). Please update the existing slot's energy capacity instead.");
+        }
+
         var s=new EnergySlot{Id=Guid.NewGuid().ToString(),NodeId=d.NodeId,SlotDate=d.SlotDate.Date,StartTime=d.StartTime,EndTime=d.EndTime,EnergyAmountKwh=d.EnergyAmountKwh,AvailableCapacityKwh=d.EnergyAmountKwh};
         await _slots.InsertAsync(s);return s;
     }
     public async Task<IReadOnlyList<EnergySlot>> GetAsync(string? nodeId=null,bool availableOnly=false){
-        var x=await _slots.GetAllAsync();if(nodeId is not null)x=x.Where(s=>s.NodeId==nodeId).ToList();if(availableOnly)x=x.Where(s=>s.Status==SlotStatus.Available&&s.AvailableCapacityKwh>0).ToList();return x.OrderBy(s=>s.SlotDate).ThenBy(s=>s.StartTime).ToList();
+        var x=await _slots.GetAllAsync();if(!string.IsNullOrWhiteSpace(nodeId))x=x.Where(s=>s.NodeId==nodeId).ToList();if(availableOnly)x=x.Where(s=>s.Status==SlotStatus.Available&&s.AvailableCapacityKwh>0).ToList();return x.OrderBy(s=>s.SlotDate).ThenBy(s=>s.StartTime).ToList();
     }
     public async Task<EnergySlot> UpdateAsync(string id,UpdateEnergySlotDto d){
         var s=await _slots.GetByIdAsync(id)??throw new KeyNotFoundException("Slot not found.");
@@ -27,8 +39,44 @@ public class EnergySlotService : IEnergySlotService {
                 throw new InvalidOperationException($"Cannot set slot to Available because microgrid node '{node.NodeName}' is deactivated ({node.AdminNote ?? "Inactive"}).");
             s.Status=st;
         } else throw new ArgumentException("Invalid slot status.");
-        s.SlotDate=d.SlotDate.Date;s.StartTime=d.StartTime;s.EndTime=d.EndTime;s.EnergyAmountKwh=d.EnergyAmountKwh;s.AvailableCapacityKwh=d.AvailableCapacityKwh;
-        s.UpdatedAt=DateTime.UtcNow;await _slots.ReplaceAsync(id,s);return s;
+
+        var allSlots = await _slots.GetAllAsync();
+        var duplicate = allSlots.FirstOrDefault(x =>
+            x.Id != id &&
+            x.NodeId == s.NodeId &&
+            x.SlotDate.Date == d.SlotDate.Date &&
+            x.StartTime.Trim() == d.StartTime.Trim() &&
+            x.EndTime.Trim() == d.EndTime.Trim());
+
+        if (duplicate != null) {
+            throw new InvalidOperationException($"Another energy slot already exists for this station on {d.SlotDate:yyyy-MM-dd} ({d.StartTime} - {d.EndTime}).");
+        }
+
+        Validation.Positive(d.EnergyAmountKwh, "EnergyAmountKwh");
+
+        // Automatically preserve reserved energy and update available capacity
+        double reservedCapacity = Math.Max(0, s.EnergyAmountKwh - s.AvailableCapacityKwh);
+        if (d.EnergyAmountKwh < reservedCapacity) {
+            throw new InvalidOperationException($"Cannot reduce total energy below already reserved capacity ({reservedCapacity:0.##} kWh).");
+        }
+
+        double newAvailable = Math.Max(0, d.EnergyAmountKwh - reservedCapacity);
+
+        s.SlotDate=d.SlotDate.Date;
+        s.StartTime=d.StartTime;
+        s.EndTime=d.EndTime;
+        s.EnergyAmountKwh=d.EnergyAmountKwh;
+        s.AvailableCapacityKwh=newAvailable;
+
+        if (newAvailable <= 0 && s.Status == SlotStatus.Available) {
+            s.Status = SlotStatus.Reserved;
+        } else if (newAvailable > 0 && s.Status == SlotStatus.Reserved) {
+            s.Status = SlotStatus.Available;
+        }
+
+        s.UpdatedAt=DateTime.UtcNow;
+        await _slots.ReplaceAsync(id,s);
+        return s;
     }
     public async Task<EnergySlot> UpdateAvailabilityAsync(string id,double available){
         var s=await _slots.GetByIdAsync(id)??throw new KeyNotFoundException("Slot not found.");

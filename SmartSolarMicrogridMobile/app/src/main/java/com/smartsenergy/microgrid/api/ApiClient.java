@@ -27,6 +27,12 @@ public final class ApiClient {
 
     public static synchronized ApiService get() {
         String baseUrl = SessionManager.getInstance().getBaseUrl();
+        if (baseUrl != null) {
+            baseUrl = baseUrl.trim();
+            if (!baseUrl.endsWith("/")) {
+                baseUrl += "/";
+            }
+        }
         if (service == null || !baseUrl.equals(currentBaseUrl)) {
             currentBaseUrl = baseUrl;
 

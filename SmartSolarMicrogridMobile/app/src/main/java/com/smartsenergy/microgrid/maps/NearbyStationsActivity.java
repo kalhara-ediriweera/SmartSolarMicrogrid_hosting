@@ -467,13 +467,19 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(NearbyStationsActivity.this)
                 .setTitle("🔴 " + name)
-                .setMessage(details.toString())
-                .setPositiveButton("OK", null);
+                .setMessage(details.toString());
 
         if ("Prosumer".equalsIgnoreCase(session.role())) {
-            builder.setNeutralButton("Book Slot", (d, w) -> {
-                finish();
+            builder.setPositiveButton("Book Slot", (d, w) -> {
+                Intent intent = new Intent(NearbyStationsActivity.this, com.smartsenergy.microgrid.prosumer.BookSlotActivity.class);
+                intent.putExtra("nodeId", ApiUtils.str(n, "id"));
+                intent.putExtra("nodeName", name);
+                intent.putExtra("nodeCode", code);
+                startActivity(intent);
             });
+            builder.setNegativeButton("Close", null);
+        } else {
+            builder.setPositiveButton("OK", null);
         }
 
         builder.show();

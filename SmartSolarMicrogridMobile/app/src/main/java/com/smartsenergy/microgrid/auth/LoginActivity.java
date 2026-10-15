@@ -55,7 +55,7 @@ public class LoginActivity extends BaseActivity {
 
     private void updateServerSettingsLabel() {
         if (tvServerSettings != null) {
-            tvServerSettings.setText("");
+            tvServerSettings.setText("⚙ Server: " + session.getBaseUrl());
         }
     }
 
@@ -177,6 +177,7 @@ public class LoginActivity extends BaseActivity {
             startActivity(new Intent(this, com.smartsolar.microgrid.ui.OperatorActivity.class));
             finish();
         } else {
+            session.clear();
             toast("Web Backoffice accounts cannot sign in on the mobile app.");
         }
     }

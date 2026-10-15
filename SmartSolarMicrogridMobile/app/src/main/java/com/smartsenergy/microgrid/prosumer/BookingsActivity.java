@@ -22,6 +22,11 @@ import com.smartsolar.microgrid.R;
 import com.smartsenergy.microgrid.api.ApiClient;
 import com.smartsenergy.microgrid.database.DatabaseHelper;
 import com.smartsenergy.microgrid.utils.ApiUtils;
+import android.graphics.Bitmap;
+import android.widget.ImageView;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -300,17 +305,43 @@ public class BookingsActivity extends BaseActivity {
             @Override
             public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
                 hideLoading();
-                if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
-                JsonObject q = r.body();
-                new MaterialAlertDialogBuilder(BookingsActivity.this)
-                        .setTitle("Transaction QR Code")
-                        .setMessage(ApiUtils.str(q, "qrData")) // Simple display for now
-                        .setPositiveButton("OK", null)
-                        .show();
+                if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
+                showQrDialog(r.body());
             }
             @Override
             public void onFailure(Call<JsonObject> c, Throwable t) { hideLoading(); fail(t); }
         });
+    }
+
+    private void showQrDialog(JsonObject q) {
+        String token = ApiUtils.str(q, "qrToken");
+        if (token.isEmpty()) token = ApiUtils.str(q, "token");
+        if (token.isEmpty()) token = ApiUtils.str(q, "qrData");
+
+        String txCode = ApiUtils.str(q, "transactionCode");
+
+        ImageView img = new ImageView(this);
+        img.setPadding(32, 32, 32, 32);
+        try {
+            BitMatrix m = new QRCodeWriter().encode(token, BarcodeFormat.QR_CODE, 650, 650);
+            Bitmap bmp  = Bitmap.createBitmap(650, 650, Bitmap.Config.RGB_565);
+            for (int x = 0; x < 650; x++) {
+                for (int y = 0; y < 650; y++) {
+                    bmp.setPixel(x, y, m.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            img.setImageBitmap(bmp);
+        } catch (Exception e) {
+            toast("QR code rendering error: " + e.getMessage());
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                .setTitle("Transaction QR Code")
+                .setMessage("📋 Code: " + txCode + "\n\nShow this QR to the Grid Operator at the charging station to complete energy transfer.")
+                .setView(img)
+                .setPositiveButton("Done", null)
+                .show();
     }
 
     private String fmt(double d) {

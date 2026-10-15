@@ -25,8 +25,11 @@ public class OperatorDashboardActivity extends BaseActivity {
 
     private final ActivityResultLauncher<ScanOptions> scanLauncher =
             registerForActivityResult(new ScanContract(), result -> {
-                if (result.getContents() != null) verifyQr(result.getContents());
-                else toast("Scan cancelled");
+                if (result.getContents() != null && !result.getContents().trim().isEmpty()) {
+                    verifyQr(result.getContents().trim());
+                } else {
+                    toast("Scan cancelled");
+                }
             });
 
     @Override
@@ -52,7 +55,7 @@ public class OperatorDashboardActivity extends BaseActivity {
         }
 
         android.view.View btnLogout = findViewById(R.id.btnLogout);
-        btnLogout.setOnClickListener(v -> doLogout());
+        btnLogout.setOnClickListener(v -> confirmLogout());
 
         // Map real features to new UI grid and scroll cards
         findViewById(R.id.btnScanQr).setOnClickListener(v -> startScan());
@@ -107,18 +110,39 @@ public class OperatorDashboardActivity extends BaseActivity {
             @Override
             public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
                 hideLoading();
-                if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
+                if (!r.isSuccessful() || r.body() == null) {
+                    new MaterialAlertDialogBuilder(OperatorDashboardActivity.this,
+                            com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                            .setTitle("❌ Invalid QR Code")
+                            .setMessage(errorMsg(r))
+                            .setPositiveButton("OK", null)
+                            .show();
+                    return;
+                }
                 JsonObject x   = r.body();
                 JsonObject res = x.has("reservation") && x.get("reservation").isJsonObject()
                         ? x.getAsJsonObject("reservation") : new JsonObject();
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(OperatorDashboardActivity.this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
-                        .setTitle("✅ QR Verified")
-                        .setMessage("📋 Transaction: " + ApiUtils.str(x, "transactionCode")
-                                + "\n🔖 Reservation: " + ApiUtils.str(res, "reservationCode")
-                                + "\n⚡ Energy: " + fmt(ApiUtils.num(res, "energyAmountKwh")) + " kWh"
-                                + "\n🔖 Status: " + ApiUtils.str(res, "status"))
+
+                String txCode = ApiUtils.str(x, "transactionCode");
+                String resCode = ApiUtils.str(res, "reservationCode");
+                String prosumer = ApiUtils.str(x, "prosumerName");
+                if (prosumer.isEmpty()) prosumer = ApiUtils.str(res, "prosumerId");
+                String node = ApiUtils.str(x, "nodeName");
+                if (node.isEmpty()) node = ApiUtils.str(res, "nodeId");
+                double energy = ApiUtils.num(res, "energyAmountKwh");
+
+                new MaterialAlertDialogBuilder(OperatorDashboardActivity.this,
+                        com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                        .setTitle("✅ Valid QR Code")
+                        .setMessage("📋 Transaction: " + txCode
+                                + "\n🔖 Reservation: " + resCode
+                                + "\n👤 Prosumer: " + prosumer
+                                + "\n📍 Node / Station: " + node
+                                + "\n⚡ Energy Amount: " + fmt(energy) + " kWh"
+                                + "\n🔖 Status: Ready to Complete"
+                                + "\n\nWould you like to complete this transaction?")
                         .setNegativeButton("Cancel", null)
-                        .setPositiveButton("Finalize Transfer", (d, w) -> completeQr(qrToken))
+                        .setPositiveButton("Complete", (d, w) -> completeQr(qrToken, resCode, txCode))
                         .show();
             }
             @Override
@@ -126,7 +150,7 @@ public class OperatorDashboardActivity extends BaseActivity {
         });
     }
 
-    private void completeQr(String qrToken) {
+    private void completeQr(String qrToken, String resCode, String txCode) {
         JsonObject body = new JsonObject();
         body.addProperty("qrToken", qrToken);
         showLoading();
@@ -134,8 +158,21 @@ public class OperatorDashboardActivity extends BaseActivity {
             @Override
             public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
                 hideLoading();
-                if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
-                toast("✅ Energy transfer completed successfully!");
+                if (!r.isSuccessful()) {
+                    new MaterialAlertDialogBuilder(OperatorDashboardActivity.this,
+                            com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                            .setTitle("❌ Completion Failed")
+                            .setMessage(errorMsg(r))
+                            .setPositiveButton("OK", null)
+                            .show();
+                    return;
+                }
+                new MaterialAlertDialogBuilder(OperatorDashboardActivity.this,
+                        com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                        .setTitle("🎉 Complete")
+                        .setMessage("✅ Reservation " + resCode + " has been successfully completed!\n\nEnergy transfer has been recorded.")
+                        .setPositiveButton("OK", (d, w) -> loadDashboard())
+                        .show();
                 loadDashboard();
             }
             @Override

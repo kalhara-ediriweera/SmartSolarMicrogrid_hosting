@@ -25,7 +25,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         SessionManager.init(this);
         session = SessionManager.getInstance();
-        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(session.getThemeMode());
+        int targetMode = session.getThemeMode();
+        if (androidx.appcompat.app.AppCompatDelegate.getDefaultNightMode() != targetMode) {
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(targetMode);
+        }
     }
     
     @Override
@@ -94,22 +97,30 @@ public abstract class BaseActivity extends AppCompatActivity {
                 }
                 
                 if (header != null) {
-                    TextView tvToggle = new TextView(this);
                     int currentMode = session.getThemeMode();
                     boolean isDark = (currentMode == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
-                    
-                    tvToggle.setText(isDark ? "☀️" : "🌙");
-                    tvToggle.setTextSize(24f);
-                    tvToggle.setPadding(32, 16, 32, 16);
-                    
-                    tvToggle.setOnClickListener(v -> {
-                        if (isDark) {
-                            session.setThemeMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
-                            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
-                        } else {
-                            session.setThemeMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
-                            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
-                        }
+
+                    float density = getResources().getDisplayMetrics().density;
+                    int size40dp = (int) (40 * density);
+                    int pad8dp = (int) (8 * density);
+                    int icon20dp = (int) (20 * density);
+
+                    FrameLayout toggleBtn = new FrameLayout(this);
+                    toggleBtn.setBackgroundResource(R.drawable.bg_logo_circle);
+                    toggleBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#33FFFFFF")));
+
+                    ImageView ivIcon = new ImageView(this);
+                    FrameLayout.LayoutParams ivLp = new FrameLayout.LayoutParams(icon20dp, icon20dp);
+                    ivLp.gravity = android.view.Gravity.CENTER;
+                    ivIcon.setLayoutParams(ivLp);
+                    ivIcon.setImageResource(isDark ? R.drawable.ic_sun : R.drawable.ic_moon);
+                    toggleBtn.addView(ivIcon);
+
+                    toggleBtn.setOnClickListener(v -> {
+                        int newMode = isDark ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+                                             : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+                        session.setThemeMode(newMode);
+                        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(newMode);
                     });
 
                     // Search for an existing icon container (LinearLayout aligned to end)
@@ -128,18 +139,18 @@ public abstract class BaseActivity extends AppCompatActivity {
                     }
 
                     if (iconContainer != null) {
-                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size40dp, size40dp);
+                        lp.setMarginEnd(pad8dp);
                         lp.gravity = android.view.Gravity.CENTER_VERTICAL;
-                        tvToggle.setLayoutParams(lp);
-                        iconContainer.addView(tvToggle, 0); // Add as first child so it appears left of logout
+                        toggleBtn.setLayoutParams(lp);
+                        iconContainer.addView(toggleBtn, 0); // Add as first child so it appears left of bell/logout
                     } else {
-                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size40dp, size40dp);
                         params.addRule(RelativeLayout.ALIGN_PARENT_END);
                         params.addRule(RelativeLayout.CENTER_VERTICAL);
-                        tvToggle.setLayoutParams(params);
-                        header.addView(tvToggle);
+                        params.setMarginEnd(pad8dp);
+                        toggleBtn.setLayoutParams(params);
+                        header.addView(toggleBtn);
                     }
                 }
             }
@@ -231,7 +242,18 @@ public abstract class BaseActivity extends AppCompatActivity {
         container.addView(card);
     }
 
-    // ── Logout helper ───────────────────────────────────────
+    // ── Logout confirmation & execution ─────────────────────
+    public void confirmLogout() {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this,
+                com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                .setTitle("Log Out")
+                .setMessage("Are you sure you want to log out of your account?")
+                .setIcon(android.R.drawable.ic_lock_power_off)
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Yes, Log Out", (dialog, which) -> doLogout())
+                .show();
+    }
+
     protected void doLogout() {
         session.clear();
         android.content.Intent i = new android.content.Intent(this, com.smartsolar.microgrid.ui.LoginActivity.class);

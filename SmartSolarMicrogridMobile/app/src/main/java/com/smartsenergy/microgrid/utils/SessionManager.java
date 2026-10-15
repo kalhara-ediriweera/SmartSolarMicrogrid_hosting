@@ -27,7 +27,15 @@ public final class SessionManager {
         if (!BASE_URL.equals(sp.getString("base_url_default", null))) {
             sp.edit().remove("base_url").putString("base_url_default", BASE_URL).apply();
         }
-        return sp.getString("base_url", BASE_URL);
+        String url = sp.getString("base_url", BASE_URL);
+        if (url == null || url.trim().isEmpty()) {
+            url = BASE_URL;
+        }
+        url = url.trim();
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        return url;
     }
 
     public void setBaseUrl(String url) {

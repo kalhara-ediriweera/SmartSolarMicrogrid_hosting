@@ -45,13 +45,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvNodeCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Loading registered stations…"
-                android:textColor="#B3FFFFFF"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Toggle Map Engine Button (Google Maps / OpenStreetMap fallback) -->
@@ -79,6 +72,35 @@
             android:contentDescription="Refresh"
             app:tint="#FFFFFF" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/tvNodeCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Loading registered stations…"
+            android:textColor="@color/on_surface"
+            android:textSize="12sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNearbyFilter"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Show nearby (50 km)"
+            android:textSize="12sp"
+            app:cornerRadius="8dp" />
     </LinearLayout>
 
     <!-- Map Viewport Container -->

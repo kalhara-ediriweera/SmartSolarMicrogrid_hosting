@@ -8,4 +8,5 @@ public interface IUserService
     Task<IEnumerable<UserResponseDto>> GetInternalUsersAsync();
     Task<UserResponseDto> UpdateUserAsync(string id, UpdateUserDto request);
     Task DeleteUserAsync(string id);
+    Task ChangePasswordAsync(string userId, ChangePasswordDto request);
 }

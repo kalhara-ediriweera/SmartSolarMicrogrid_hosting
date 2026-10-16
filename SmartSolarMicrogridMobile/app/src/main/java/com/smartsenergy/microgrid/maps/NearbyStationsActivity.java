@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -22,10 +23,10 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.Locale;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
@@ -54,10 +55,13 @@ import retrofit2.Response;
 public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCallback {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int NEARBY_PERMISSION_REQUEST_CODE = 1002;
+    private static final float NEARBY_RADIUS_METERS = 50_000f;
 
     private WebView webViewMap;
     private FrameLayout googleMapContainer;
     private MaterialButton btnToggleMap;
+    private MaterialButton btnNearbyFilter;
     private TextView tvNodeCount;
     private MaterialCardView cardLoading;
     private TextView tvLoadingMessage;
@@ -67,9 +71,12 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
 
     private GoogleMap googleMapInstance;
     private FusedLocationProviderClient fusedLocationClient;
+    private Location userLocation;
 
     private JsonArray nodes = new JsonArray();
     private boolean isGoogleMapsActive = true;
+    private boolean googleMapsAvailable;
+    private boolean nearbyOnly;
     private int currentMapType = GoogleMap.MAP_TYPE_NORMAL;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
@@ -87,6 +94,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         webViewMap         = findViewById(R.id.webViewMap);
         googleMapContainer = findViewById(R.id.googleMapContainer);
         btnToggleMap       = findViewById(R.id.btnToggleMap);
+        btnNearbyFilter    = findViewById(R.id.btnNearbyFilter);
         tvNodeCount        = findViewById(R.id.tvNodeCount);
         cardLoading        = findViewById(R.id.cardLoading);
         tvLoadingMessage   = findViewById(R.id.tvLoadingMessage);
@@ -101,16 +109,11 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         btnRefresh.setOnClickListener(v -> loadNodes());
 
         btnToggleMap.setOnClickListener(v -> toggleMapEngine());
+        btnNearbyFilter.setOnClickListener(v -> toggleNearbyFilter());
 
         fabMapType.setOnClickListener(v -> cycleMapType());
         fabFitBounds.setOnClickListener(v -> fitCameraToMarkers());
         fabMyLocation.setOnClickListener(v -> moveToUserLocation());
-
-        // Default to Google Maps as primary
-        isGoogleMapsActive = true;
-        googleMapContainer.setVisibility(View.VISIBLE);
-        webViewMap.setVisibility(View.GONE);
-        btnToggleMap.setText("Google");
 
         // Initialize Google Maps Fragment
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
@@ -123,11 +126,13 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         // Pre-configure OpenStreetMap / CartoDB WebView
         setupOsmWebView();
 
-        // Default to interactive high-performance Map (CartoDB / OpenStreetMap) so map is 100% visible immediately without missing API keys
-        isGoogleMapsActive = false;
-        googleMapContainer.setVisibility(View.GONE);
-        webViewMap.setVisibility(View.VISIBLE);
-        btnToggleMap.setText("OSM");
+        googleMapsAvailable = hasGoogleMapsApiKey();
+        isGoogleMapsActive = googleMapsAvailable;
+        googleMapContainer.setVisibility(isGoogleMapsActive ? View.VISIBLE : View.GONE);
+        webViewMap.setVisibility(isGoogleMapsActive ? View.GONE : View.VISIBLE);
+        btnToggleMap.setText(isGoogleMapsActive ? "Google" : "OSM");
+        btnToggleMap.setVisibility(googleMapsAvailable ? View.VISIBLE : View.GONE);
+        updateNodeCount();
 
         // Non-blocking load of registered nodes
         loadNodes();
@@ -153,6 +158,10 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
     }
 
     private void toggleMapEngine() {
+        if (!isGoogleMapsActive && !googleMapsAvailable) {
+            toast("Configure MAPS_API_KEY to use Google Maps. OpenStreetMap is active.");
+            return;
+        }
         isGoogleMapsActive = !isGoogleMapsActive;
         if (isGoogleMapsActive) {
             webViewMap.setVisibility(View.GONE);
@@ -166,6 +175,113 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
             btnToggleMap.setText("OSM");
             renderOsmMap();
             toast("Switched to OpenStreetMap (CartoDB High-Speed Tiles)");
+        }
+    }
+
+    private boolean hasGoogleMapsApiKey() {
+        try {
+            ApplicationInfo info = getPackageManager().getApplicationInfo(
+                    getPackageName(), PackageManager.GET_META_DATA);
+            String key = info.metaData == null ? null
+                    : info.metaData.getString("com.google.android.geo.API_KEY");
+            return key != null && !key.trim().isEmpty() && !key.contains("YOUR_");
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    private void toggleNearbyFilter() {
+        if (nearbyOnly) {
+            nearbyOnly = false;
+            renderVisibleNodes();
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    NEARBY_PERMISSION_REQUEST_CODE);
+            return;
+        }
+
+        loadNearbyNodes();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void loadNearbyNodes() {
+        requestFreshLocation();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestFreshLocation() {
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                cancellationTokenSource.getToken())
+                .addOnSuccessListener(this, location -> {
+                    if (location == null) {
+                        nearbyOnly = false;
+                        toast("Current location is unavailable. Showing all active nodes.");
+                        updateNodeCount();
+                        return;
+                    }
+                    applyNearbyLocation(location);
+                })
+                .addOnFailureListener(this, error -> {
+                    nearbyOnly = false;
+                    toast("Could not get your location. Showing all active nodes.");
+                    updateNodeCount();
+                });
+    }
+
+    private void applyNearbyLocation(Location location) {
+        userLocation = location;
+        nearbyOnly = true;
+        renderVisibleNodes();
+    }
+
+    private JsonArray getVisibleNodes() {
+        JsonArray visible = new JsonArray();
+        if (nodes == null) return visible;
+
+        for (JsonElement element : nodes) {
+            if (!element.isJsonObject()) continue;
+            JsonObject node = element.getAsJsonObject();
+            double lat = ApiUtils.num(node, "latitude");
+            double lng = ApiUtils.num(node, "longitude");
+            if (lat == 0.0 && lng == 0.0) continue;
+
+            if (nearbyOnly && userLocation != null) {
+                float[] distance = new float[1];
+                Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
+                        lat, lng, distance);
+                if (distance[0] > NEARBY_RADIUS_METERS) continue;
+            }
+            visible.add(node);
+        }
+        return visible;
+    }
+
+    private void renderVisibleNodes() {
+        updateNodeCount();
+        if (isGoogleMapsActive) {
+            plotGoogleMarkers();
+        } else {
+            renderOsmMap();
+        }
+    }
+
+    private void updateNodeCount() {
+        JsonArray visible = getVisibleNodes();
+        if (nearbyOnly) {
+            tvNodeCount.setText(visible.size() + " nodes within 50 km");
+            btnNearbyFilter.setText("Show all nodes");
+        } else {
+            tvNodeCount.setText((nodes == null ? 0 : nodes.size()) + " registered solar nodes");
+            btnNearbyFilter.setText("Show nearby (50 km)");
         }
     }
 
@@ -204,17 +320,14 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
 
     private void loadNodes() {
         showMapLoading("Loading registered nodes…");
-        ApiClient.get().nodes(false).enqueue(new Callback<JsonElement>() {
+        ApiClient.get().nodes(true).enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideMapLoading();
                 if (r.isSuccessful() && r.body() != null && r.body().isJsonArray()) {
                     nodes = r.body().getAsJsonArray();
-                }
-
-                // If backend has no nodes registered yet, load default microgrid stations
-                if (nodes == null || nodes.size() == 0) {
-                    nodes = getDefaultNodes();
+                } else {
+                    nodes = new JsonArray();
                 }
 
                 updateCountLabel();
@@ -228,24 +341,20 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
             @Override
             public void onFailure(Call<JsonElement> c, Throwable t) {
                 hideMapLoading();
-                // Provide reference stations so the map is always operational
-                if (nodes == null || nodes.size() == 0) {
-                    nodes = getDefaultNodes();
-                }
+                nodes = new JsonArray();
                 updateCountLabel();
                 if (isGoogleMapsActive) {
                     plotGoogleMarkers();
                 } else {
                     renderOsmMap();
                 }
-                toast("Offline mode: displaying registered reference nodes");
+                toast("Could not load active nodes. Check your connection and refresh.");
             }
         });
     }
 
     private void updateCountLabel() {
-        int count = (nodes != null) ? nodes.size() : 0;
-        tvNodeCount.setText(count + " registered solar node" + (count == 1 ? "" : "s"));
+        updateNodeCount();
     }
 
     // ── Google Maps Engine ─────────────────────────────────
@@ -314,13 +423,14 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
      * Plots all registered solar nodes on Google Maps using RED LOCATION MARKERS.
      */
     private void plotGoogleMarkers() {
-        if (googleMapInstance == null || nodes == null || nodes.size() == 0) return;
+        JsonArray visibleNodes = getVisibleNodes();
+        if (googleMapInstance == null) return;
 
         googleMapInstance.clear();
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
         int validCount = 0;
 
-        for (JsonElement el : nodes) {
+        for (JsonElement el : visibleNodes) {
             if (!el.isJsonObject()) continue;
             JsonObject n = el.getAsJsonObject();
             double lat = ApiUtils.num(n, "latitude");
@@ -353,27 +463,31 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         if (validCount > 0) {
             try {
                 if (validCount == 1) {
-                    JsonObject first = nodes.get(0).getAsJsonObject();
-                    LatLng single = new LatLng(ApiUtils.num(first, "latitude"), ApiUtils.num(first, "longitude"));
+                    LatLng single = boundsBuilder.build().getCenter();
                     googleMapInstance.animateCamera(CameraUpdateFactory.newLatLngZoom(single, 14f));
                 } else {
                     LatLngBounds bounds = boundsBuilder.build();
                     googleMapInstance.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 120));
                 }
             } catch (Exception e) {
-                JsonObject first = nodes.get(0).getAsJsonObject();
-                LatLng single = new LatLng(ApiUtils.num(first, "latitude"), ApiUtils.num(first, "longitude"));
-                googleMapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(single, 11f));
+                if (nearbyOnly && userLocation != null) {
+                    LatLng user = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+                    googleMapInstance.moveCamera(CameraUpdateFactory.newLatLngZoom(user, 10f));
+                }
             }
+        } else if (nearbyOnly && userLocation != null) {
+            LatLng user = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+            googleMapInstance.animateCamera(CameraUpdateFactory.newLatLngZoom(user, 10f));
         }
     }
 
     private void fitCameraToMarkers() {
         if (isGoogleMapsActive) {
-            if (googleMapInstance == null || nodes == null || nodes.size() == 0) return;
+            JsonArray visibleNodes = getVisibleNodes();
+            if (googleMapInstance == null || visibleNodes.size() == 0) return;
             LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
             int count = 0;
-            for (JsonElement el : nodes) {
+            for (JsonElement el : visibleNodes) {
                 if (!el.isJsonObject()) continue;
                 JsonObject n = el.getAsJsonObject();
                 double lat = ApiUtils.num(n, "latitude");
@@ -436,6 +550,23 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NEARBY_PERMISSION_REQUEST_CODE) {
+            boolean locationGranted = false;
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED
+                        && (Manifest.permission.ACCESS_FINE_LOCATION.equals(permissions[i])
+                        || Manifest.permission.ACCESS_COARSE_LOCATION.equals(permissions[i]))) {
+                    locationGranted = true;
+                    break;
+                }
+            }
+            if (locationGranted) {
+                loadNearbyNodes();
+            } else {
+                toast("Location permission is needed to show nearby nodes.");
+            }
+            return;
+        }
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 enableMyLocationIfPermitted();
@@ -502,14 +633,19 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         StringBuilder jsMarkers = new StringBuilder();
         double centerLat = 6.9271;
         double centerLng = 79.8612;
+        JsonArray visibleNodes = getVisibleNodes();
 
-        if (nodes != null && nodes.size() > 0) {
-            JsonObject first = nodes.get(0).getAsJsonObject();
+        if (nearbyOnly && userLocation != null) {
+            centerLat = userLocation.getLatitude();
+            centerLng = userLocation.getLongitude();
+        } else if (visibleNodes.size() > 0) {
+            JsonObject first = visibleNodes.get(0).getAsJsonObject();
             centerLat = ApiUtils.num(first, "latitude");
             centerLng = ApiUtils.num(first, "longitude");
+        }
 
-            for (int i = 0; i < nodes.size(); i++) {
-                JsonObject n = nodes.get(i).getAsJsonObject();
+        for (int i = 0; i < visibleNodes.size(); i++) {
+                JsonObject n = visibleNodes.get(i).getAsJsonObject();
                 double lat = ApiUtils.num(n, "latitude");
                 double lng = ApiUtils.num(n, "longitude");
                 if (lat == 0.0 && lng == 0.0) continue;
@@ -526,7 +662,6 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
                         "addStationMarker(%f, %f, '%s', '%s', %f, '%s', '%s', '%s');\n",
                         lat, lng, name, code, cap, bat, status, id
                 ));
-            }
         }
 
         String html = "<!DOCTYPE html>\n"
@@ -688,30 +823,4 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
         }
     }
 
-    // ── Default Reference Nodes ─────────────────────────────
-    private JsonArray getDefaultNodes() {
-        JsonArray arr = new JsonArray();
-        arr.add(createNode("1", "ND-CMB-01", "Colombo Central Microgrid", 6.9271, 79.8612, 120.0, "8 / 10 Slots", "Active", "08:00", "18:00"));
-        arr.add(createNode("2", "ND-KDY-02", "Kandy Solar Hub", 7.2906, 80.6337, 85.0, "6 / 8 Slots", "Active", "08:00", "18:00"));
-        arr.add(createNode("3", "ND-GAL-03", "Galle Coastal Solar Station", 6.0535, 80.2210, 95.0, "4 / 6 Slots", "Active", "08:00", "18:00"));
-        arr.add(createNode("4", "ND-NEG-04", "Negombo Solar Station", 7.2008, 79.8737, 110.0, "8 / 10 Slots", "Active", "08:00", "18:00"));
-        arr.add(createNode("5", "ND-JAF-05", "Jaffna Solar Grid Node", 9.6615, 80.0255, 140.0, "10 / 12 Slots", "Active", "08:00", "18:00"));
-        return arr;
-    }
-
-    private JsonObject createNode(String id, String code, String name, double lat, double lng,
-                                  double cap, String slots, String status, String schedSt, String schedEnd) {
-        JsonObject o = new JsonObject();
-        o.addProperty("id", id);
-        o.addProperty("nodeCode", code);
-        o.addProperty("nodeName", name);
-        o.addProperty("latitude", lat);
-        o.addProperty("longitude", lng);
-        o.addProperty("capacityKw", cap);
-        o.addProperty("batterySlotAvailability", slots);
-        o.addProperty("status", status);
-        o.addProperty("scheduleStart", schedSt);
-        o.addProperty("scheduleEnd", schedEnd);
-        return o;
-    }
 }

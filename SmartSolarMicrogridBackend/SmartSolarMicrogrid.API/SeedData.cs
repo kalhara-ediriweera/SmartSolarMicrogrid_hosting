@@ -17,15 +17,24 @@ public static class SeedData
 
         var list = await users.GetAllAsync();
 
-        async Task<User> AddUser(string username, string password, UserRole role, UserStatus status = UserStatus.Active)
+        async Task<User> AddUser(string username, string password, UserRole role, string email = "", UserStatus status = UserStatus.Active)
         {
             var existing = list.FirstOrDefault(x => x.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
-            if (existing is not null) return existing;
+            if (existing is not null)
+            {
+                if (string.IsNullOrEmpty(existing.Email) && !string.IsNullOrEmpty(email))
+                {
+                    existing.Email = email;
+                    await users.ReplaceAsync(existing.Id, existing);
+                }
+                return existing;
+            }
 
             var user = new User
             {
                 Id = Guid.NewGuid().ToString(),
                 Username = username,
+                Email = email,
                 PasswordHash = hasher.Hash(password),
                 Role = role,
                 Status = status
@@ -36,10 +45,10 @@ public static class SeedData
             return user;
         }
 
-        await AddUser("admin", "Admin@123", UserRole.Backoffice);
-        await AddUser("operator1", "Operator@123", UserRole.GridOperator);
+        await AddUser("admin", "Admin@123", UserRole.Backoffice, "admin@smartsolarmicrogrid.com");
+        await AddUser("operator1", "Operator@123", UserRole.GridOperator, "operator1@smartsolarmicrogrid.com");
 
-        var prosumerUser = await AddUser("prosumer1", "Prosumer@123", UserRole.Prosumer, UserStatus.Active);
+        var prosumerUser = await AddUser("prosumer1", "Prosumer@123", UserRole.Prosumer, "prosumer1@example.com", UserStatus.Active);
 
         var allProsumers = await prosumers.GetAllAsync();
         if (!allProsumers.Any(x => x.UserId == prosumerUser.Id))

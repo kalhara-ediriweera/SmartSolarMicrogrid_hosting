@@ -9,6 +9,8 @@ using SmartSolarMicrogrid.Application.Services;
 using SmartSolarMicrogrid.Infrastructure.MongoDB;
 using SmartSolarMicrogrid.Infrastructure.MongoDB.Repositories;
 using SmartSolarMicrogrid.Infrastructure.Security;
+using SmartSolarMicrogrid.Infrastructure.Email;
+using SmartSolarMicrogrid.Infrastructure.Interfaces;
 using MongoDB.Bson.Serialization.Conventions;
 
 var conventionPack = new ConventionPack { new IgnoreExtraElementsConvention(true) };
@@ -16,6 +18,7 @@ ConventionRegistry.Register("IgnoreExtraElements", conventionPack, type => true)
 
 var builder=WebApplication.CreateBuilder(args);
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<MongoDbContext>();
 
 builder.Services.AddScoped<UserRepository>();
@@ -38,6 +41,7 @@ builder.Services.AddScoped<IReservationService,ReservationService>();
 builder.Services.AddScoped<IQRTransactionService,QRTransactionService>();
 builder.Services.AddScoped<IDashboardService,DashboardService>();
 builder.Services.AddScoped<IUserService,UserService>();
+builder.Services.AddScoped<IEmailService,EmailService>();
 builder.Services.AddScoped<IOcrService,NicOcrService>();
 builder.Services.AddScoped<IOperatorService,OperatorService>();
 

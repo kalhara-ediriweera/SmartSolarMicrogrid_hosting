@@ -267,11 +267,28 @@ public class ProsumerDashboardActivity extends BaseActivity {
         }
         
         if ("Pending".equalsIgnoreCase(status) || "Approved".equalsIgnoreCase(status)) {
+            boolean has12h = ApiUtils.has12HoursNotice(r);
             btnModify.setVisibility(android.view.View.VISIBLE);
-            btnModify.setOnClickListener(v -> { modifyDialog(r); dialog.dismiss(); });
-            
             btnCancel.setVisibility(android.view.View.VISIBLE);
-            btnCancel.setOnClickListener(v -> { confirmCancel(ApiUtils.str(r, "id")); dialog.dismiss(); });
+
+            if (!has12h) {
+                btnModify.setAlpha(0.45f);
+                btnCancel.setAlpha(0.45f);
+                android.view.View.OnClickListener lockedListener = v -> {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                            .setTitle("Action Not Allowed")
+                            .setMessage("Modifications and cancellations require at least 12 hours' notice before the scheduled slot time.\n\nThis reservation starts in less than 12 hours and can no longer be edited or cancelled.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                };
+                btnModify.setOnClickListener(lockedListener);
+                btnCancel.setOnClickListener(lockedListener);
+            } else {
+                btnModify.setAlpha(1.0f);
+                btnCancel.setAlpha(1.0f);
+                btnModify.setOnClickListener(v -> { modifyDialog(r); dialog.dismiss(); });
+                btnCancel.setOnClickListener(v -> { confirmCancel(ApiUtils.str(r, "id")); dialog.dismiss(); });
+            }
         } else {
             btnClose.setVisibility(android.view.View.VISIBLE);
             btnClose.setOnClickListener(v -> dialog.dismiss());
@@ -279,9 +296,34 @@ public class ProsumerDashboardActivity extends BaseActivity {
     }
 
     private void modifyDialog(JsonObject old) {
+        String resId = ApiUtils.str(old, "id");
+        String code = ApiUtils.str(old, "reservationCode");
+        String node = ApiUtils.str(old, "nodeName");
+        String originalDate = ApiUtils.str(old, "reservationDate");
+        String shortDate = originalDate.length() >= 10 ? originalDate.substring(0, 10) : originalDate;
+        String originalStart = ApiUtils.str(old, "startTime");
+        String originalEnd = ApiUtils.str(old, "endTime");
+        String originalSlotId = ApiUtils.str(old, "energySlotId");
+        double originalKwh = ApiUtils.num(old, "energyAmountKwh");
+
+        final String[] selectedSlotId = new String[]{ originalSlotId };
+        final String[] selectedDate = new String[]{ originalDate };
+        final String[] selectedStart = new String[]{ originalStart };
+        final String[] selectedEnd = new String[]{ originalEnd };
+
         android.view.View view = android.view.LayoutInflater.from(this).inflate(R.layout.dialog_modify_reservation, null);
-        com.google.android.material.textfield.TextInputEditText etSlotId = view.findViewById(R.id.etSlotId);
+
+        TextView tvModifyCode = view.findViewById(R.id.tvModifyCode);
+        tvModifyCode.setText(code + (node.isEmpty() ? "" : "  ·  " + node));
+
+        TextView tvModifySlot = view.findViewById(R.id.tvModifySlot);
+        tvModifySlot.setText("📅 " + shortDate + "   ⏱ " + originalStart + " - " + originalEnd);
+
+        TextView tvModifyCapacity = view.findViewById(R.id.tvModifyCapacity);
+
         com.google.android.material.textfield.TextInputEditText etEnergyAmount = view.findViewById(R.id.etEnergyAmount);
+        etEnergyAmount.setText(fmt(originalKwh));
+        etEnergyAmount.selectAll();
 
         androidx.appcompat.app.AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setView(view)
@@ -289,28 +331,92 @@ public class ProsumerDashboardActivity extends BaseActivity {
                 .show();
 
         view.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
-        view.findViewById(R.id.btnSave).setOnClickListener(v -> {
-            try {
-                JsonObject j = new JsonObject();
-                j.addProperty("energySlotId", etSlotId.getText().toString().trim());
-                j.addProperty("energyAmountKwh", Double.parseDouble(etEnergyAmount.getText().toString()));
-                updateReservation(ApiUtils.str(old, "id"), j);
-                dialog.dismiss();
-            } catch (Exception e) { toast("Enter valid values"); }
-        });
-    }
 
-    private void updateReservation(String id, JsonObject body) {
-        showLoading();
-        ApiClient.get().updateReservation(id, session.nic(), body).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
-                hideLoading();
-                if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
-                showSummary("✅ Booking Updated", r.body());
+        view.findViewById(R.id.btnChangeSlot).setOnClickListener(v -> {
+            showLoading();
+            ApiClient.get().slots("", true).enqueue(new Callback<JsonElement>() {
+                @Override
+                public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
+                    hideLoading();
+                    if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
+                    JsonArray rawSlots = r.body().getAsJsonArray();
+                    JsonArray slots = ApiUtils.filterBookableSlots(rawSlots);
+                    if (slots.size() == 0) {
+                        toast("No alternative future slots available within 7 days.");
+                        return;
+                    }
+
+                    String[] labels = new String[slots.size()];
+                    for (int i = 0; i < slots.size(); i++) {
+                        JsonObject s = slots.get(i).getAsJsonObject();
+                        String d = ApiUtils.str(s, "slotDate");
+                        labels[i] = (d.length() >= 10 ? d.substring(0, 10) : d) + "   "
+                                + ApiUtils.str(s, "startTime") + " - " + ApiUtils.str(s, "endTime")
+                                + "   (" + fmt(ApiUtils.num(s, "availableCapacityKwh")) + " kWh avail)";
+                    }
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(ProsumerDashboardActivity.this)
+                            .setTitle("Choose New Time Slot")
+                            .setItems(labels, (d, w) -> {
+                                JsonObject chosen = slots.get(w).getAsJsonObject();
+                                selectedSlotId[0] = ApiUtils.str(chosen, "id");
+                                selectedDate[0] = ApiUtils.str(chosen, "slotDate");
+                                selectedStart[0] = ApiUtils.str(chosen, "startTime");
+                                selectedEnd[0] = ApiUtils.str(chosen, "endTime");
+
+                                String displayDate = selectedDate[0].length() >= 10 ? selectedDate[0].substring(0, 10) : selectedDate[0];
+                                tvModifySlot.setText("📅 " + displayDate + "   ⏱ " + selectedStart[0] + " - " + selectedEnd[0]);
+
+                                double avail = ApiUtils.num(chosen, "availableCapacityKwh");
+                                tvModifyCapacity.setText("Available in selected slot: " + fmt(avail) + " kWh");
+                                tvModifyCapacity.setVisibility(android.view.View.VISIBLE);
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                }
+                @Override
+                public void onFailure(Call<JsonElement> c, Throwable t) { hideLoading(); fail(t); }
+            });
+        });
+
+        view.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            String val = etEnergyAmount.getText() != null ? etEnergyAmount.getText().toString().trim() : "";
+            double kwh;
+            try {
+                kwh = Double.parseDouble(val);
+            } catch (Exception e) {
+                toast("Please enter a valid energy amount");
+                return;
             }
-            @Override
-            public void onFailure(Call<JsonObject> c, Throwable t) { hideLoading(); fail(t); }
+            if (kwh <= 0) {
+                toast("Energy amount must be greater than 0");
+                return;
+            }
+
+            dialog.dismiss();
+
+            JsonObject body = new JsonObject();
+            body.addProperty("energySlotId", selectedSlotId[0]);
+            body.addProperty("energyAmountKwh", kwh);
+
+            final double finalKwh = kwh;
+            final String finalSlotId = selectedSlotId[0];
+            final String finalDate = selectedDate[0];
+            final String finalStart = selectedStart[0];
+            final String finalEnd = selectedEnd[0];
+
+            showLoading();
+            ApiClient.get().updateReservation(resId, session.nic(), body).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
+                    hideLoading();
+                    if (!r.isSuccessful()) { toast(errorMsg(r)); return; }
+                    db.updateReservationFull(resId, finalSlotId, finalDate, finalStart, finalEnd, finalKwh, "Pending");
+                    showSummary("✅ Booking Updated", r.body());
+                    loadDashboard();
+                }
+                @Override
+                public void onFailure(Call<JsonObject> c, Throwable t) { hideLoading(); fail(t); }
+            });
         });
     }
 

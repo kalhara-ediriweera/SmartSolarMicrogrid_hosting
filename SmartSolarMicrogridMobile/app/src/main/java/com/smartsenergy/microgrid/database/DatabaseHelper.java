@@ -173,4 +173,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         v.put("status", status);
         getWritableDatabase().update("local_reservations", v, "id=?", new String[]{id});
     }
+
+    public void updateReservation(String id, double energyAmountKwh, String status) {
+        ContentValues v = new ContentValues();
+        v.put("energy_amount_kwh", energyAmountKwh);
+        v.put("status", status);
+        getWritableDatabase().update("local_reservations", v, "id=?", new String[]{id});
+    }
+
+    public void updateReservationFull(String id, String slotId, String date, String startTime, String endTime, double energyAmountKwh, String status) {
+        ContentValues v = new ContentValues();
+        if (slotId != null && !slotId.isEmpty()) v.put("energy_slot_id", slotId);
+        if (date != null && !date.isEmpty()) v.put("reservation_date", date);
+        if (startTime != null && !startTime.isEmpty()) v.put("start_time", startTime);
+        if (endTime != null && !endTime.isEmpty()) v.put("end_time", endTime);
+        v.put("energy_amount_kwh", energyAmountKwh);
+        v.put("status", status);
+        getWritableDatabase().update("local_reservations", v, "id=?", new String[]{id});
+    }
 }

@@ -137,4 +137,38 @@ public final class ApiUtils {
         }
         return filtered;
     }
+
+    /**
+     * Updates and cancellations require at least 12 hours' notice before the scheduled slot start time.
+     * Returns true if the reservation slot starts in at least 12 hours from now.
+     */
+    public static boolean has12HoursNotice(JsonObject reservation) {
+        if (reservation == null) return false;
+        String dateStr = str(reservation, "reservationDate").trim();
+        String timeStr = str(reservation, "startTime").trim();
+        if (dateStr.isEmpty() || timeStr.isEmpty()) return false;
+
+        try {
+            if (dateStr.length() >= 10) {
+                dateStr = dateStr.substring(0, 10);
+            }
+            if (timeStr.length() == 4 && timeStr.charAt(1) == ':') {
+                timeStr = "0" + timeStr;
+            } else if (timeStr.length() > 5) {
+                timeStr = timeStr.substring(0, 5);
+            }
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+            Date slotStart = sdf.parse(dateStr + " " + timeStr);
+            if (slotStart == null) return false;
+
+            long now = System.currentTimeMillis();
+            long diffMs = slotStart.getTime() - now;
+            long twelveHoursMs = 12L * 60 * 60 * 1000L;
+
+            return diffMs >= twelveHoursMs;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

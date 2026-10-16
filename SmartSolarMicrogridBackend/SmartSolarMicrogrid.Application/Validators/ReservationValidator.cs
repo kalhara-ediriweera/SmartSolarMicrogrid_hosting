@@ -41,9 +41,16 @@ public static class ReservationValidator
     }
 
     // Modification and cancellation need at least 12 hours notice before the reservation starts.
-    public static void HasMinimumNotice(DateTime reservationStartUtc, DateTime nowUtc, string action)
+    public static void HasMinimumNotice(DateTime reservationStartUtc, DateTime nowUtc, string action, DateTime? nowLocal = null)
     {
         // Execute HasMinimumNotice operation logic
+        if (nowLocal.HasValue)
+        {
+            var localStart = DateTime.TryParse($"{reservationStartUtc:yyyy-MM-dd HH:mm}", out var lx) ? lx : reservationStartUtc;
+            if (localStart <= nowLocal.Value.AddHours(MinNoticeHours))
+                throw new InvalidOperationException($"{action} requires at least {MinNoticeHours} hours notice.");
+        }
+
         if (reservationStartUtc <= nowUtc.AddHours(MinNoticeHours))
             throw new InvalidOperationException($"{action} requires at least {MinNoticeHours} hours notice.");
     }

@@ -8,6 +8,7 @@
     android:background="@drawable/bg_dialog">
 
     <TextView
+        android:id="@+id/tvModifyTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Modify Reservation"
@@ -15,40 +16,65 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="4dp" />
 
     <TextView
+        android:id="@+id/tvModifyCode"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Note: Modification requires at least 12 hours notice."
+        android:text="RES-000000 · Station"
         android:textColor="@color/on_surface_variant"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="16dp" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <!-- Current / Selected Slot Container -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:hint="New Slot ID"
-        app:boxStrokeColor="@color/primary"
-        app:hintTextColor="@color/primary">
+        android:orientation="vertical"
+        android:background="@drawable/bg_stat_chip"
+        android:padding="14dp"
+        android:layout_marginBottom="16dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etSlotId"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SCHEDULED TIME SLOT"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvModifySlot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:textColor="@color/on_surface" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:text="📅 2026-10-20   ⏱ 10:00 - 11:00"
+            android:textColor="@color/on_surface"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChangeSlot"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:text="Change Time Slot (Optional)"
+            android:textSize="12sp"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
+
+    <!-- Energy Amount Input -->
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilEnergyAmount"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:hint="New Energy Amount (kWh)"
+        android:layout_marginBottom="8dp"
+        android:hint="Energy Amount (kW / kWh)"
         app:boxStrokeColor="@color/primary"
         app:hintTextColor="@color/primary">
 
@@ -60,6 +86,25 @@
             android:textColor="@color/on_surface" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:id="@+id/tvModifyCapacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/on_surface_variant"
+        android:textSize="12sp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ℹ️ Modification requires at least 12 hours notice. Once updated, booking status will return to Pending for operator review."
+        android:textColor="@color/on_surface_variant"
+        android:textSize="12sp"
+        android:lineSpacingExtra="2dp"
+        android:layout_marginBottom="20dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -70,7 +115,7 @@
             android:id="@+id/btnCancel"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
-            android:layout_height="54dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
             android:text="Cancel"
             android:textColor="@color/on_surface_variant" />
@@ -78,10 +123,10 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
             android:layout_width="0dp"
-            android:layout_height="54dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:text="Update"
+            android:text="Update KW"
             android:textColor="@color/on_primary"
             app:backgroundTint="@color/primary"
             app:cornerRadius="12dp" />

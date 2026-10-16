@@ -87,11 +87,23 @@ public class OperatorService : IOperatorService
         }
 
         var node = await _nodes.GetByIdAsync(stationId);
-        var query = (await _slots.GetAllAsync()).Where(s => s.NodeId == stationId);
+        var query = (await _slots.GetAllAsync()).Where(s => s.NodeId == stationId).ToList();
+
+        foreach (var s in query)
+        {
+            if (s.AvailableCapacityKwh > 0 && s.Status == SlotStatus.Reserved)
+            {
+                s.Status = SlotStatus.Available;
+            }
+            else if (s.AvailableCapacityKwh <= 0 && s.Status == SlotStatus.Available)
+            {
+                s.Status = SlotStatus.Reserved;
+            }
+        }
 
         if (availableOnly)
         {
-            query = query.Where(s => s.Status == SlotStatus.Available && s.AvailableCapacityKwh > 0);
+            query = query.Where(s => s.Status == SlotStatus.Available && s.AvailableCapacityKwh > 0).ToList();
         }
 
         var slots = query.OrderBy(s => s.SlotDate).ThenBy(s => s.StartTime).ToList();

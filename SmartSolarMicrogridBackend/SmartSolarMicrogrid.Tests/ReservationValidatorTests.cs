@@ -53,6 +53,21 @@ public class ReservationValidatorTests
         var ex = Assert.Throws<InvalidOperationException>(() => ReservationValidator.HasMinimumNotice(Now.AddHours(3), Now, "Cancellation"));
         Assert.Equal("Cancellation requires at least 12 hours notice.", ex.Message);
     }
+    [Fact]
+    public void ChangeWithLocalTimeLessThan12HoursNoticeIsRejected()
+    {
+        var localNow = new DateTime(2026, 10, 17, 1, 0, 0);
+        var slotTime = new DateTime(2026, 10, 17, 8, 0, 0); // 7 hours away
+        Assert.Throws<InvalidOperationException>(() =>
+            ReservationValidator.HasMinimumNotice(slotTime, localNow.AddHours(-5.5), "Modification", localNow));
+    }
+    [Fact]
+    public void ChangeWithLocalTimeMoreThan12HoursNoticeIsAllowed()
+    {
+        var localNow = new DateTime(2026, 10, 17, 1, 0, 0);
+        var slotTime = new DateTime(2026, 10, 18, 8, 0, 0); // 31 hours away
+        ReservationValidator.HasMinimumNotice(slotTime, localNow.AddHours(-5.5), "Modification", localNow);
+    }
 
     // Reservation start time
     [Fact]

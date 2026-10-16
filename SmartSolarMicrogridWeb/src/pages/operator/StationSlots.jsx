@@ -36,23 +36,26 @@ export default function Avail() {
             <table>
                 <thead><tr><th>Date</th><th>Slot</th><th>Total</th><th>Available</th><th>Status</th><th>Reason</th><th /></tr></thead>
                 <tbody>
-                    {a.length > 0 ? a.map(s => (
-                        <tr key={s.id}>
-                            <td>{new Date(s.slotDate).toLocaleDateString()}</td>
-                            <td>{s.startTime}–{s.endTime}</td>
-                            <td>{fmtKwh(s.energyAmountKwh)} kWh</td>
-                            <td>{fmtKwh(s.availableCapacityKwh)} kWh</td>
-                            <td><span className={`badge ${s.status === "Available" ? "badge-active" : "badge-inactive"}`}>{s.status}</span></td>
-                            <td>{s.status === "Unavailable"
-                                ? <span className="reason-pill" title={s.unavailableReason || "No reason provided"}><AlertTriangle size={12} />{s.unavailableReason || "No reason provided"}</span>
-                                : "—"}</td>
-                            <td style={{ textAlign: "right" }}>
-                                {s.status === "Available" && (s.hasPendingRequest
-                                    ? <span className="badge">Request Pending</span>
-                                    : <button className="btn-delete" onClick={() => open(s)}>Request Unavailable</button>)}
-                            </td>
-                        </tr>
-                    )) : <tr><td colSpan="7" style={{ textAlign: "center", padding: "24px", color: "#94a3b8" }}>No energy slots found for your branch.</td></tr>}
+                    {a.length > 0 ? a.map(s => {
+                        const slotStatus = (s.status === "Reserved" && (s.availableCapacityKwh || 0) > 0) ? "Available" : s.status;
+                        return (
+                            <tr key={s.id}>
+                                <td>{new Date(s.slotDate).toLocaleDateString()}</td>
+                                <td>{s.startTime}–{s.endTime}</td>
+                                <td>{fmtKwh(s.energyAmountKwh)} kWh</td>
+                                <td>{fmtKwh(s.availableCapacityKwh)} kWh</td>
+                                <td><span className={`badge ${slotStatus === "Available" ? "badge-active" : "badge-inactive"}`}>{slotStatus}</span></td>
+                                <td>{slotStatus === "Unavailable"
+                                    ? <span className="reason-pill" title={s.unavailableReason || "No reason provided"}><AlertTriangle size={12} />{s.unavailableReason || "No reason provided"}</span>
+                                    : "—"}</td>
+                                <td style={{ textAlign: "right" }}>
+                                    {slotStatus === "Available" && (s.hasPendingRequest
+                                        ? <span className="badge">Request Pending</span>
+                                        : <button className="btn-delete" onClick={() => open(s)}>Request Unavailable</button>)}
+                                </td>
+                            </tr>
+                        );
+                    }) : <tr><td colSpan="7" style={{ textAlign: "center", padding: "24px", color: "#94a3b8" }}>No energy slots found for your branch.</td></tr>}
                 </tbody>
             </table>
         </Table>

@@ -121,6 +121,18 @@ public class EnergySlotService : IEnergySlotService
             x = x.Where(s => s.NodeId == nodeId).ToList();
         }
 
+        foreach (var s in x)
+        {
+            if (s.AvailableCapacityKwh > 0 && s.Status == SlotStatus.Reserved)
+            {
+                s.Status = SlotStatus.Available;
+            }
+            else if (s.AvailableCapacityKwh <= 0 && s.Status == SlotStatus.Available)
+            {
+                s.Status = SlotStatus.Reserved;
+            }
+        }
+
         if (availableOnly)
         {
             var nowUtc = DateTime.UtcNow;
@@ -223,11 +235,12 @@ public class EnergySlotService : IEnergySlotService
         s.EnergyAmountKwh = d.EnergyAmountKwh;
         s.AvailableCapacityKwh = newAvailable;
 
-        if (newAvailable <= 0 && s.Status == SlotStatus.Available)
+        if (newAvailable <= 0)
         {
+            s.AvailableCapacityKwh = 0;
             s.Status = SlotStatus.Reserved;
         }
-        else if (newAvailable > 0 && s.Status == SlotStatus.Reserved)
+        else if (s.Status == SlotStatus.Reserved || st == SlotStatus.Available)
         {
             s.Status = SlotStatus.Available;
         }
@@ -259,8 +272,16 @@ public class EnergySlotService : IEnergySlotService
             throw new ArgumentException("Invalid availability.");
         }
 
-        s.AvailableCapacityKwh = available;
-        s.Status = available > 0 ? SlotStatus.Available : SlotStatus.Unavailable;
+        s.AvailableCapacityKwh = Math.Round(available, 3);
+        if (s.AvailableCapacityKwh <= 0)
+        {
+            s.AvailableCapacityKwh = 0;
+            s.Status = SlotStatus.Reserved;
+        }
+        else
+        {
+            s.Status = SlotStatus.Available;
+        }
         s.UpdatedAt = DateTime.UtcNow;
 
         await _slots.ReplaceAsync(id, s);

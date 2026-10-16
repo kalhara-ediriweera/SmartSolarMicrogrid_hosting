@@ -282,7 +282,8 @@ export default function Slots(){
                             const isNodeInactive = node && node.status !== 0 && node.status !== "Active";
                             const slotDate = new Date(s.slotDate).toISOString().slice(0, 10);
                             const isPastSlot = !isFutureSlotStart(slotDate, s.startTime);
-                            const statusStr = typeof s.status === 'number' ? ["Available", "Reserved", "Unavailable", "Completed"][s.status] : s.status;
+                            const rawStatus = typeof s.status === 'number' ? ["Available", "Reserved", "Unavailable", "Completed"][s.status] : s.status;
+                            const statusStr = (rawStatus === "Reserved" && (s.availableCapacityKwh || 0) > 0) ? "Available" : rawStatus;
                             return (
                                 <tr key={s.id}>
                                     <td>{new Date(s.slotDate).toLocaleDateString()}</td>

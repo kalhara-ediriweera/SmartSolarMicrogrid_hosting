@@ -49,6 +49,11 @@ public class ReservationService : IReservationService
         var s = await _slots.GetByIdAsync(d.EnergySlotId)
             ?? throw new KeyNotFoundException("Energy slot not found.");
 
+        if (s.AvailableCapacityKwh > 0 && s.Status == SlotStatus.Reserved)
+        {
+            s.Status = SlotStatus.Available;
+        }
+
         var node = await _nodes.GetByIdAsync(s.NodeId)
             ?? throw new KeyNotFoundException("Node not found.");
 
@@ -66,11 +71,11 @@ public class ReservationService : IReservationService
         }
 
         var duplicate = (await _res.GetAllAsync())
-            .Any(r => r.EnergySlotId == s.Id && r.Status != ReservationStatus.Cancelled);
+            .Any(r => r.ProsumerId == p.Id && r.EnergySlotId == s.Id && r.Status != ReservationStatus.Cancelled);
 
         if (duplicate)
         {
-            throw new InvalidOperationException("This slot already has an active reservation.");
+            throw new InvalidOperationException("You already have an active reservation for this slot. Please modify your existing reservation instead.");
         }
 
         var r = new EnergyReservation
@@ -83,14 +88,20 @@ public class ReservationService : IReservationService
             ReservationDate = s.SlotDate,
             StartTime = s.StartTime,
             EndTime = s.EndTime,
-            EnergyAmountKwh = d.EnergyAmountKwh
+            EnergyAmountKwh = Math.Round(d.EnergyAmountKwh, 3)
         };
 
-        // Deduct energy from slot and update its availability state
-        s.AvailableCapacityKwh -= d.EnergyAmountKwh;
+        // Deduct energy from slot and update its availability state.
+        // It remains Available until total capacity is fully booked (AvailableCapacityKwh reaches 0).
+        s.AvailableCapacityKwh = Math.Round(s.AvailableCapacityKwh - d.EnergyAmountKwh, 3);
         if (s.AvailableCapacityKwh <= 0)
         {
+            s.AvailableCapacityKwh = 0;
             s.Status = SlotStatus.Reserved;
+        }
+        else
+        {
+            s.Status = SlotStatus.Available;
         }
         s.UpdatedAt = DateTime.UtcNow;
 
@@ -230,13 +241,21 @@ public class ReservationService : IReservationService
             throw new InvalidOperationException("Reservation cannot be modified.");
         }
 
-        ReservationValidator.HasMinimumNotice(ReservationValidator.StartDateTime(r.ReservationDate, r.StartTime), DateTime.UtcNow, "Modification");
+        ReservationValidator.HasMinimumNotice(ReservationValidator.StartDateTime(r.ReservationDate, r.StartTime), DateTime.UtcNow, "Modification", DateTime.Now);
         Validation.Positive(d.EnergyAmountKwh, "EnergyAmountKwh");
 
-        var s = await _slots.GetByIdAsync(d.EnergySlotId)
+        var targetSlotId = string.IsNullOrWhiteSpace(d.EnergySlotId) ? r.EnergySlotId : d.EnergySlotId;
+        var s = await _slots.GetByIdAsync(targetSlotId)
             ?? throw new KeyNotFoundException("Energy slot not found.");
 
+        if (s.AvailableCapacityKwh > 0 && s.Status == SlotStatus.Reserved)
+        {
+            s.Status = SlotStatus.Available;
+        }
+
         ReservationValidator.WithinBookingWindow(s.SlotDate, s.StartTime, DateTime.UtcNow, DateTime.Now);
+
+        EnergySlot? oldSlot = null;
 
         if (r.EnergySlotId != s.Id)
         {
@@ -245,52 +264,59 @@ public class ReservationService : IReservationService
                 throw new InvalidOperationException("New slot is unavailable.");
             }
 
-            var oldSlot = await _slots.GetByIdAsync(r.EnergySlotId);
+            oldSlot = await _slots.GetByIdAsync(r.EnergySlotId);
             if (oldSlot != null)
             {
-                oldSlot.AvailableCapacityKwh += r.EnergyAmountKwh;
-                if (oldSlot.Status == SlotStatus.Reserved && oldSlot.AvailableCapacityKwh > 0)
+                oldSlot.AvailableCapacityKwh = Math.Round(oldSlot.AvailableCapacityKwh + r.EnergyAmountKwh, 3);
+                if (oldSlot.AvailableCapacityKwh > 0)
                 {
                     oldSlot.Status = SlotStatus.Available;
                 }
                 oldSlot.UpdatedAt = DateTime.UtcNow;
-                await _slots.ReplaceAsync(oldSlot.Id, oldSlot);
             }
 
-            s.AvailableCapacityKwh -= d.EnergyAmountKwh;
+            s.AvailableCapacityKwh = Math.Round(s.AvailableCapacityKwh - d.EnergyAmountKwh, 3);
             if (s.AvailableCapacityKwh <= 0)
             {
+                s.AvailableCapacityKwh = 0;
                 s.Status = SlotStatus.Reserved;
             }
             s.UpdatedAt = DateTime.UtcNow;
-            await _slots.ReplaceAsync(s.Id, s);
         }
         else
         {
-            double diff = d.EnergyAmountKwh - r.EnergyAmountKwh;
-            if (diff > 0 && s.AvailableCapacityKwh < diff)
+            double effectiveAvailable = Math.Round(s.AvailableCapacityKwh + r.EnergyAmountKwh, 3);
+            if (d.EnergyAmountKwh > effectiveAvailable)
             {
                 throw new InvalidOperationException("Requested energy exceeds available capacity.");
             }
-            s.AvailableCapacityKwh -= diff;
+
+            s.AvailableCapacityKwh = Math.Round(effectiveAvailable - d.EnergyAmountKwh, 3);
             if (s.AvailableCapacityKwh <= 0)
             {
+                s.AvailableCapacityKwh = 0;
                 s.Status = SlotStatus.Reserved;
             }
-            else if (s.AvailableCapacityKwh > 0 && s.Status == SlotStatus.Reserved)
+            else
             {
                 s.Status = SlotStatus.Available;
             }
             s.UpdatedAt = DateTime.UtcNow;
-            await _slots.ReplaceAsync(s.Id, s);
         }
+
+        // Persist slot updates after all validation checks have succeeded
+        if (oldSlot != null)
+        {
+            await _slots.ReplaceAsync(oldSlot.Id, oldSlot);
+        }
+        await _slots.ReplaceAsync(s.Id, s);
 
         r.EnergySlotId = s.Id;
         r.NodeId = s.NodeId;
         r.ReservationDate = s.SlotDate;
         r.StartTime = s.StartTime;
         r.EndTime = s.EndTime;
-        r.EnergyAmountKwh = d.EnergyAmountKwh;
+        r.EnergyAmountKwh = Math.Round(d.EnergyAmountKwh, 3);
         r.Status = ReservationStatus.Pending;
 
         await _res.ReplaceAsync(id, r);
@@ -317,7 +343,7 @@ public class ReservationService : IReservationService
             throw new InvalidOperationException("Already cancelled.");
         }
 
-        ReservationValidator.HasMinimumNotice(ReservationValidator.StartDateTime(r.ReservationDate, r.StartTime), DateTime.UtcNow, "Cancellation");
+        ReservationValidator.HasMinimumNotice(ReservationValidator.StartDateTime(r.ReservationDate, r.StartTime), DateTime.UtcNow, "Cancellation", DateTime.Now);
 
         r.Status = ReservationStatus.Cancelled;
         r.CancelledAt = DateTime.UtcNow;
@@ -326,8 +352,12 @@ public class ReservationService : IReservationService
         var s = await _slots.GetByIdAsync(r.EnergySlotId);
         if (s is not null)
         {
-            s.Status = SlotStatus.Available;
-            s.AvailableCapacityKwh += r.EnergyAmountKwh;
+            s.AvailableCapacityKwh = Math.Round(s.AvailableCapacityKwh + r.EnergyAmountKwh, 3);
+            if (s.AvailableCapacityKwh > 0)
+            {
+                s.Status = SlotStatus.Available;
+            }
+            s.UpdatedAt = DateTime.UtcNow;
             await _slots.ReplaceAsync(s.Id, s);
         }
 

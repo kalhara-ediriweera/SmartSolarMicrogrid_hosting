@@ -37,6 +37,13 @@ public class OperatorSlotsActivity extends BaseActivity {
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
+        if (availableOnly) {
+            setupBottomNav(R.id.nav_bookings);
+        } else {
+            View bNav = findViewById(R.id.bottomNav);
+            if (bNav != null) bNav.setVisibility(View.GONE);
+        }
+
         loadSlots();
         loadBranchInfo();
     }
@@ -48,8 +55,11 @@ public class OperatorSlotsActivity extends BaseActivity {
                 if (r.isSuccessful() && r.body() != null) {
                     String nodeName = ApiUtils.str(r.body(), "nodeName");
                     if (!nodeName.isEmpty()) {
-                        TextView tvTitle = findViewById(R.id.tvTitle);
-                        tvTitle.setText((availableOnly ? "Available Slots" : "Update Slots") + " (" + nodeName + ")");
+                        TextView tvSubtitle = findViewById(R.id.tvSubtitle);
+                        if (tvSubtitle != null) {
+                            tvSubtitle.setText("📍 " + nodeName);
+                            tvSubtitle.setVisibility(View.VISIBLE);
+                        }
                     }
                 }
             }

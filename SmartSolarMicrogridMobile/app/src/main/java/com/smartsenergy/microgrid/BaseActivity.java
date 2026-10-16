@@ -281,8 +281,8 @@ public abstract class BaseActivity extends AppCompatActivity {
                     }
                 } else if (id == R.id.nav_bookings) {
                     if ("Operator".equalsIgnoreCase(session.role()) || "GridOperator".equalsIgnoreCase(session.role())) {
-                        i = new android.content.Intent(this, com.smartsenergy.microgrid.operator.OperatorReservationsActivity.class);
-                        i.putExtra("status", "All");
+                        i = new android.content.Intent(this, com.smartsenergy.microgrid.operator.OperatorSlotsActivity.class);
+                        i.putExtra("availableOnly", true);
                     } else {
                         i = new android.content.Intent(this, com.smartsenergy.microgrid.prosumer.BookingsActivity.class);
                     }

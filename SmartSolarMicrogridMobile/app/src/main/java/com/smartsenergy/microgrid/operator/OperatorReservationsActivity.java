@@ -35,7 +35,7 @@ public class OperatorReservationsActivity extends BaseActivity {
         TextView tvTitle = findViewById(R.id.tvTitle);
         if ("All".equalsIgnoreCase(statusFilter)) {
             tvTitle.setText("All Reservations");
-            findViewById(R.id.btnBack).setVisibility(View.GONE);
+            findViewById(R.id.btnBack).setOnClickListener(v -> finish());
             setupBottomNav(R.id.nav_bookings);
         } else {
             tvTitle.setText(statusFilter + " Reservations");
@@ -54,8 +54,11 @@ public class OperatorReservationsActivity extends BaseActivity {
                 if (r.isSuccessful() && r.body() != null) {
                     String nodeName = ApiUtils.str(r.body(), "nodeName");
                     if (!nodeName.isEmpty()) {
-                        TextView tvTitle = findViewById(R.id.tvTitle);
-                        tvTitle.setText(("All".equalsIgnoreCase(statusFilter) ? "All Reservations" : statusFilter + " Reservations") + " (" + nodeName + ")");
+                        TextView tvSubtitle = findViewById(R.id.tvSubtitle);
+                        if (tvSubtitle != null) {
+                            tvSubtitle.setText("📍 " + nodeName);
+                            tvSubtitle.setVisibility(View.VISIBLE);
+                        }
                     }
                 }
             }

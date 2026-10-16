@@ -487,16 +487,41 @@ export default function Stations() {
         setGpsLoading(true);
         setGpsStatus(null);
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const lat = Number(position.coords.latitude.toFixed(6));
                 const lng = Number(position.coords.longitude.toFixed(6));
                 const acc = Math.round(position.coords.accuracy);
                 setF(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                let placeName = "";
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+                        { signal: controller.signal }
+                    );
+                    clearTimeout(timeoutId);
+                    if (response.ok) {
+                        const result = await response.json();
+                        const address = result.address || {};
+                        placeName = address.city || address.town || address.village || address.municipality || address.suburb || address.county || address.state_district || address.state || "";
+                        if (!placeName && result.display_name) placeName = result.display_name.split(",")[0].trim();
+                    }
+                } catch {
+                    // Keep the coordinates even if the place-name lookup is unavailable.
+                } finally {
+                    setGpsLoading(false);
+                }
+                if (placeName) {
+                    setF(prev => ({
+                        ...prev,
+                        nodeName: prev.nodeName.trim() ? prev.nodeName : `${placeName} Solar Hub`
+                    }));
+                }
                 setGpsStatus({
                     type: "success",
-                    message: `GPS acquired: ${lat}, ${lng} (Accuracy: ±${acc}m)`
+                    message: `GPS acquired: ${lat}, ${lng} (Accuracy: ±${acc}m)${placeName ? ` - ${placeName} Solar Hub suggested` : ""}`
                 });
-                setGpsLoading(false);
             },
             (error) => {
                 let msg = "Failed to retrieve GPS location.";
@@ -624,11 +649,10 @@ export default function Stations() {
                     Node Code
                     <input
                         required
-                        disabled={!!edit}
+                        readOnly
                         value={f.nodeCode || ''}
                         type="text"
                         placeholder="e.g. N-003"
-                        onChange={e => setF({ ...f, nodeCode: e.target.value })}
                     />
                 </label>
 

@@ -24,10 +24,35 @@ export default function Slots(){
     const selectedNode = nodes.find(n => n.id === f.nodeId);
     const isSelectedNodeInactive = selectedNode && selectedNode.status !== 0 && selectedNode.status !== "Active";
     const reservedAmount = (edit && originalSlot) ? Math.max(0, (originalSlot.energyAmountKwh || 0) - (originalSlot.availableCapacityKwh || 0)) : 0;
+    const today = new Date().toISOString().slice(0, 10);
+    const currentTime = new Date().toISOString().slice(11, 16);
+    const isFutureSlotStart = (date, time) => new Date(`${date}T${time}:00Z`) > new Date();
+    const getSlotDurationHours = (start, end) => {
+        const [startHours, startMinutes] = start.split(":").map(Number);
+        const [endHours, endMinutes] = end.split(":").map(Number);
+        const durationMinutes = endHours * 60 + endMinutes - startHours * 60 - startMinutes;
+        return Number.isFinite(durationMinutes) && durationMinutes > 0 ? durationMinutes / 60 : null;
+    };
+    const slotDurationHours = getSlotDurationHours(f.startTime, f.endTime);
+    const maxEnergyKwh = selectedNode && slotDurationHours
+        ? selectedNode.capacityKw * slotDurationHours
+        : null;
 
     async function go(e){
         e.preventDefault();
         setErr("");
+        if (!slotDurationHours) {
+            setErr("Slot end time must be after its start time.");
+            return;
+        }
+        if (!isFutureSlotStart(f.slotDate, f.startTime)) {
+            setErr("Energy slots must start in the future.");
+            return;
+        }
+        if (maxEnergyKwh !== null && +f.energyAmountKwh > maxEnergyKwh + 1e-9) {
+            setErr(`Total energy cannot exceed ${maxEnergyKwh.toFixed(2)} kWh for this node and slot duration.`);
+            return;
+        }
         if (edit && isSelectedNodeInactive && f.status === "Available") {
             setErr(`Cannot set slot status to Available because microgrid node '${selectedNode.nodeName}' is deactivated (${selectedNode.adminNote || "Inactive"}).`);
             return;
@@ -123,7 +148,6 @@ export default function Slots(){
             new Date(s.slotDate).toLocaleDateString().includes(q)
         );
     });
-
     return <>
         <Title t="Energy Slots" d="Create and monitor trading slots"/>
         <SlotRequestsPanel onResolved={load}/>
@@ -157,18 +181,24 @@ export default function Slots(){
                         })}
                     </select>
                 </label>
-                <label>Date<input required type="date" value={f.slotDate} onChange={e=>setF({...f,slotDate:e.target.value})}/></label>
-                <label>Start<input type="time" required value={f.startTime} onChange={e=>setF({...f,startTime:e.target.value})}/></label>
-                <label>End<input type="time" required value={f.endTime} onChange={e=>setF({...f,endTime:e.target.value})}/></label>
+                <label>Date<input required type="date" min={today} value={f.slotDate} onChange={e=>setF({...f,slotDate:e.target.value})}/></label>
+                <label>Start<input type="time" required min={f.slotDate === today ? currentTime : undefined} value={f.startTime} onChange={e=>setF({...f,startTime:e.target.value})}/></label>
+                <label>End<input type="time" required min={f.startTime} value={f.endTime} onChange={e=>setF({...f,endTime:e.target.value})}/></label>
                 <label>Total Energy (kWh)
                     <input
                         required
                         type="number"
                         min="0.1"
                         step="0.1"
+                        max={maxEnergyKwh ?? undefined}
                         value={f.energyAmountKwh}
                         onChange={e=>handleTotalEnergyChange(e.target.value)}
                     />
+                    {maxEnergyKwh !== null && (
+                        <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
+                            Maximum for this slot: {maxEnergyKwh.toFixed(2)} kWh ({selectedNode.capacityKw} kW × {slotDurationHours} h).
+                        </span>
+                    )}
                 </label>
                 {edit && (
                     <>
@@ -244,6 +274,8 @@ export default function Slots(){
                         {filteredSlots.length > 0 ? filteredSlots.map(s => {
                             const node = nodes.find(n => n.id === s.nodeId);
                             const isNodeInactive = node && node.status !== 0 && node.status !== "Active";
+                            const slotDate = new Date(s.slotDate).toISOString().slice(0, 10);
+                            const isPastSlot = !isFutureSlotStart(slotDate, s.startTime);
                             const statusStr = typeof s.status === 'number' ? ["Available", "Reserved", "Unavailable", "Completed"][s.status] : s.status;
                             return (
                                 <tr key={s.id}>
@@ -271,7 +303,7 @@ export default function Slots(){
                                         </span>
                                     </td>
                                     <td style={{ textAlign: "right", paddingRight: "18px" }}>
-                                        <button className="btn-edit" onClick={()=>startEdit(s)}>Edit</button>
+                                        <button className="btn-edit" disabled={isPastSlot} title={isPastSlot ? "Past slots cannot be edited" : undefined} onClick={()=>startEdit(s)}>Edit</button>
                                     </td>
                                 </tr>
                             );

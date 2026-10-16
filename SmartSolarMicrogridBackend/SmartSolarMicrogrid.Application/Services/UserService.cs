@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: UserService.cs
+// Purpose: Business logic service coordinating workflows and validation for User.
+// ============================================================================
+
 using SmartSolarMicrogrid.Application.DTOs.Users;
 using SmartSolarMicrogrid.Application.Interfaces;
 using SmartSolarMicrogrid.Application.Validators;
@@ -17,6 +23,7 @@ public class UserService : IUserService
 
     public UserService(UserRepository users, PasswordHasher hasher, IEmailService emailService)
     {
+        // Initialize required dependencies and services
         _users = users;
         _hasher = hasher;
         _emailService = emailService;
@@ -24,6 +31,7 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> CreateUserAsync(CreateUserDto request)
     {
+        // Validate incoming parameters and persist new record
         if (request.Role == UserRole.Prosumer)
             throw new ArgumentException("Prosumer accounts cannot be created via the internal user management endpoint.");
 
@@ -71,8 +79,9 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserResponseDto>> GetInternalUsersAsync()
     {
+        // Retrieve matching records from data store
         var users = await _users.GetAllAsync();
-        
+
         return users
             .Where(u => u.Role != UserRole.Prosumer)
             .Select(u => new UserResponseDto
@@ -89,6 +98,7 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> UpdateUserAsync(string id, UpdateUserDto request)
     {
+        // Apply updates and synchronize changes to repository
         var user = await _users.GetByIdAsync(id);
         if (user == null)
             throw new KeyNotFoundException("User not found.");
@@ -105,7 +115,7 @@ public class UserService : IUserService
 
         if (request.Role.HasValue)
             user.Role = request.Role.Value;
-            
+
         if (request.Status.HasValue)
             user.Status = request.Status.Value;
 
@@ -132,6 +142,7 @@ public class UserService : IUserService
 
     public async Task ChangePasswordAsync(string userId, ChangePasswordDto request)
     {
+        // Execute ChangePasswordAsync operation logic
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
             throw new KeyNotFoundException("User not found.");
@@ -152,10 +163,11 @@ public class UserService : IUserService
 
     public async Task DeleteUserAsync(string id)
     {
+        // Remove entity record and release associated allocations
         var user = await _users.GetByIdAsync(id);
         if (user == null)
             throw new KeyNotFoundException("User not found.");
-            
+
         await _users.DeleteAsync(id);
     }
 }

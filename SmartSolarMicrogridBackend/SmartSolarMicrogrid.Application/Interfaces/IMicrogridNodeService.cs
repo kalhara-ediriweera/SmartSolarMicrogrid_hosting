@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IMicrogridNodeService.cs
+// Purpose: Service contract defining operations and abstractions for MicrogridNode.
+// ============================================================================
+
 using SmartSolarMicrogrid.Application.DTOs.Microgrid;
 using SmartSolarMicrogrid.Domain.Entities;
 

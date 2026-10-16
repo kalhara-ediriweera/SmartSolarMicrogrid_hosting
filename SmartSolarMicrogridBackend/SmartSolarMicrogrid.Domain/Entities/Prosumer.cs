@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: Prosumer.cs
+// Purpose: Domain entity representing Prosumer within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class Prosumer {
+
+public class Prosumer
+{
     public string Id { get; set; } = "";
     public string NIC { get; set; } = "";
     public string FullName { get; set; } = "";

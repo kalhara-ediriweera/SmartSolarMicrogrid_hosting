@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: UserResponseDto.cs
+// Purpose: Data transfer object representing UserResponse payload.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 
 namespace SmartSolarMicrogrid.Application.DTOs.Users;

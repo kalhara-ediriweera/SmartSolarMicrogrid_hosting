@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: EnergySlot.cs
+// Purpose: Domain entity representing EnergySlot within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class EnergySlot {
+
+public class EnergySlot
+{
     public string Id { get; set; } = "";
     public string NodeId { get; set; } = "";
     public DateTime SlotDate { get; set; }

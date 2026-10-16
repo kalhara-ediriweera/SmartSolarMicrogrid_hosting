@@ -1,1 +1,23 @@
-using SmartSolarMicrogrid.Application.DTOs.Reservation; using SmartSolarMicrogrid.Domain.Entities; namespace SmartSolarMicrogrid.Application.Interfaces; public interface IReservationService { Task<EnergyReservation> CreateAsync(string nic,CreateReservationDto dto); Task<EnergyReservation?> GetAsync(string id); Task<IReadOnlyList<ReservationResponseDto>> GetMineAsync(string nic,string? search=null,string? status=null); Task<IReadOnlyList<ReservationResponseDto>> GetByStatusAsync(string status); Task<IReadOnlyList<ReservationResponseDto>> GetAllAsync(); Task<EnergyReservation> UpdateAsync(string nic,string id,UpdateReservationDto dto); Task<EnergyReservation> CancelAsync(string nic,string id); Task<EnergyReservation> ApproveAsync(string id); }
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IReservationService.cs
+// Purpose: Contract for prosumer energy reservation workflows, booking validation,
+//          lifecycle state transitions, and operator approvals.
+// ============================================================================
+
+using SmartSolarMicrogrid.Application.DTOs.Reservation;
+using SmartSolarMicrogrid.Domain.Entities;
+
+namespace SmartSolarMicrogrid.Application.Interfaces;
+
+public interface IReservationService
+{
+    Task<EnergyReservation> CreateAsync(string nic, CreateReservationDto dto);
+    Task<EnergyReservation?> GetAsync(string id);
+    Task<IReadOnlyList<ReservationResponseDto>> GetMineAsync(string nic, string? search = null, string? status = null);
+    Task<IReadOnlyList<ReservationResponseDto>> GetByStatusAsync(string status);
+    Task<IReadOnlyList<ReservationResponseDto>> GetAllAsync();
+    Task<EnergyReservation> UpdateAsync(string nic, string id, UpdateReservationDto dto);
+    Task<EnergyReservation> CancelAsync(string nic, string id);
+    Task<EnergyReservation> ApproveAsync(string id);
+}

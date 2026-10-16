@@ -1,5 +1,13 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: PasswordHasher.cs
+// Purpose: Core component for PasswordHasher within the SmartSolar microgrid platform.
+// ============================================================================
+
 namespace SmartSolarMicrogrid.Infrastructure.Security;
-public class PasswordHasher {
+
+public class PasswordHasher
+{
     public string Hash(string password) => BCrypt.Net.BCrypt.HashPassword(password);
-    public bool Verify(string password,string hash) => BCrypt.Net.BCrypt.Verify(password,hash);
+    public bool Verify(string password, string hash) => BCrypt.Net.BCrypt.Verify(password, hash);
 }

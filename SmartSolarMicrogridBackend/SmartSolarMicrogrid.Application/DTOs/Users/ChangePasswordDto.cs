@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: ChangePasswordDto.cs
+// Purpose: Data transfer object representing ChangePassword payload.
+// ============================================================================
+
 using System.ComponentModel.DataAnnotations;
 
 namespace SmartSolarMicrogrid.Application.DTOs.Users;

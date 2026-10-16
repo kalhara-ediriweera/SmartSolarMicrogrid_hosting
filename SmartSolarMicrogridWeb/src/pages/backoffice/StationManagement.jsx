@@ -451,6 +451,12 @@ function LocationPickerModal({ initialLat, initialLng, initialName, isOpen, onCl
     );
 }
 
+const fmtKw = (v) => {
+    if (v == null || isNaN(v)) return "0";
+    const n = Number(v);
+    return Number.isInteger(n) ? n.toString() : Number(n.toFixed(3)).toString();
+};
+
 export default function Stations() {
     const [a, setA] = useState([]), [edit, setEdit] = useState(null), [err, setErr] = useState("");
     const [search, setSearch] = useState("");
@@ -863,7 +869,7 @@ export default function Stations() {
                                         <ExternalLink size={11} className="gps-ext-icon" />
                                     </a>
                                 </td>
-                                <td>{x.capacityKw} kW</td>
+                                <td>{fmtKw(x.capacityKw)} kW</td>
                                 <td>{x.batterySlotAvailability}</td>
                                 <td>
                                     <span className={`badge ${x.status === 0 || x.status === "Active" ? "badge-active" : "badge-inactive"}`}>

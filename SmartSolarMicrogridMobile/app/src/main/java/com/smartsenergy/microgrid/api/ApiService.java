@@ -13,7 +13,8 @@ public interface ApiService {
     @POST("prosumers/{nic}/deactivation-request") Call<JsonObject> requestDeactivation(@Path("nic") String nic);
 
     @GET("dashboard/prosumer") Call<JsonObject> prosumerDashboard(@Query("nic") String nic);
-    @GET("dashboard/operator") Call<JsonObject> operatorDashboard();
+    @GET("operator/dashboard") Call<JsonObject> operatorDashboard();
+    @GET("operator/me") Call<JsonObject> operatorMe();
 
     @GET("microgrid-nodes") Call<JsonElement> nodes(@Query("activeOnly") boolean activeOnly);
     @GET("microgrid-nodes/{id}") Call<JsonObject> node(@Path("id") String id);
@@ -30,8 +31,8 @@ public interface ApiService {
     @POST("qr/verify") Call<JsonObject> verifyQr(@Body JsonObject body);
     @POST("qr/complete") Call<JsonObject> completeQr(@Body JsonObject body);
 
-    @GET("energy-slots") Call<JsonElement> operatorSlots(@Query("nodeId") String nodeId, @Query("availableOnly") boolean availableOnly);
+    @GET("operator/slots") Call<JsonElement> operatorSlots(@Query("availableOnly") boolean availableOnly);
     @PUT("energy-slots/{id}/availability") Call<JsonObject> updateAvailability(@Path("id") String id, @Query("availableCapacityKwh") double capacity);
-    @GET("reservations/status/{status}") Call<JsonElement> reservationsByStatus(@Path("status") String status);
+    @GET("operator/reservations/status/{status}") Call<JsonElement> reservationsByStatus(@Path("status") String status);
     @GET("reservations/all") Call<JsonElement> allReservations();
 }

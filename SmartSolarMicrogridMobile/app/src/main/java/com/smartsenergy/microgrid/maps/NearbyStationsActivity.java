@@ -22,6 +22,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.Locale;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -277,7 +279,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
                 text1.setTypeface(null, android.graphics.Typeface.BOLD);
 
                 String subtitle = "Code: " + ApiUtils.str(n, "nodeCode")
-                        + " | " + ApiUtils.num(n, "capacityKw") + " kW"
+                        + " | " + ApiUtils.fmt(ApiUtils.num(n, "capacityKw")) + " kW"
                         + "\nBattery: " + getBatteryText(n)
                         + " (" + ApiUtils.str(n, "status") + ")";
                 text2.setText(subtitle);
@@ -334,7 +336,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
             if (name.isEmpty()) name = "Solar Node " + ApiUtils.str(n, "nodeCode");
 
             String snippet = "Code: " + ApiUtils.str(n, "nodeCode")
-                    + " · Capacity: " + ApiUtils.num(n, "capacityKw") + " kW";
+                    + " · Capacity: " + ApiUtils.fmt(ApiUtils.num(n, "capacityKw")) + " kW";
 
             // RED LOCATION MARKER
             Marker marker = googleMapInstance.addMarker(new MarkerOptions()
@@ -459,7 +461,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
 
         StringBuilder details = new StringBuilder();
         details.append("📍 Station Code: ").append(code).append("\n");
-        details.append("⚡ Max Capacity: ").append(capacity).append(" kW\n");
+        details.append("⚡ Max Capacity: ").append(ApiUtils.fmt(capacity)).append(" kW\n");
         details.append("🔋 Battery Slots: ").append(battery).append("\n");
         details.append("⏱ Operating Hours: ").append(schedSt).append(" – ").append(schedEnd).append("\n");
         details.append("🗺 Coordinates: ").append(String.format("%.4f, %.4f", lat, lng)).append("\n");
@@ -520,6 +522,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
                 String id = ApiUtils.str(n, "id").replace("'", "\\'");
 
                 jsMarkers.append(String.format(
+                        Locale.US,
                         "addStationMarker(%f, %f, '%s', '%s', %f, '%s', '%s', '%s');\n",
                         lat, lng, name, code, cap, bat, status, id
                 ));
@@ -633,7 +636,7 @@ public class NearbyStationsActivity extends BaseActivity implements OnMapReadyCa
                 + "      \"<div class='popup-title'>🔴 \" + name + \"</div>\" +\n"
                 + "      \"<div class='popup-meta'>\" +\n"
                 + "      \"<b>Station Code:</b> \" + code + \"<br/>\" +\n"
-                + "      \"<b>Capacity:</b> \" + cap + \" kW<br/>\" +\n"
+                + "      \"<b>Capacity:</b> \" + (typeof cap === 'number' ? (Number.isInteger(cap) ? cap : Number(cap.toFixed(3))) : cap) + \" kW<br/>\" +\n"
                 + "      \"<b>Battery slots:</b> \" + bat + \"<br/>\" +\n"
                 + "      \"<b>Status:</b> \" + status +\n"
                 + "      \"</div>\" +\n"

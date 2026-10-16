@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: UserValidator.cs
+// Purpose: Validation rules and business integrity checks for User.
+// ============================================================================
+
 using System.Text.RegularExpressions;
 
 namespace SmartSolarMicrogrid.Application.Validators;
@@ -10,6 +16,7 @@ public static class UserValidator
 
     public static void ValidateEmail(string? email)
     {
+        // Validate business rules, format integrity, and constraints
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email address is required.");
 
@@ -19,6 +26,7 @@ public static class UserValidator
 
     public static void ValidatePassword(string? password)
     {
+        // Validate business rules, format integrity, and constraints
         if (string.IsNullOrWhiteSpace(password))
             throw new ArgumentException("Password is required.");
 

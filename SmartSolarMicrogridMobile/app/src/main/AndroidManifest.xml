@@ -21,6 +21,12 @@
         <activity android:name="com.smartsenergy.microgrid.operator.OperatorSlotsActivity" android:exported="false" />
         <activity android:name="com.smartsenergy.microgrid.prosumer.ProsumerDashboardActivity" android:exported="false" />
         <activity android:name="com.smartsenergy.microgrid.operator.OperatorDashboardActivity" android:exported="false" />
+        <activity
+            android:name="com.smartsenergy.microgrid.operator.CustomScannerActivity"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            android:windowSoftInputMode="stateAlwaysHidden"
+            android:exported="false" />
         <activity android:name=".ui.OperatorActivity" android:exported="false" />
         <activity android:name=".ui.ProsumerActivity" android:exported="false" />
         <activity android:name=".ui.RegisterActivity" android:exported="false" />

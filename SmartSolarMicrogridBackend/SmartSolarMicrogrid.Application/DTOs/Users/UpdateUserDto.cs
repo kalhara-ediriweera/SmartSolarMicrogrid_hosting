@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: UpdateUserDto.cs
+// Purpose: Data transfer object representing UpdateUser payload.
+// ============================================================================
+
 using System.ComponentModel.DataAnnotations;
 using SmartSolarMicrogrid.Domain.Enums;
 

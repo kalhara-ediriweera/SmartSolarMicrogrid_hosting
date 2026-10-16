@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: EmailService.cs
+// Purpose: Business logic service coordinating workflows and validation for Email.
+// ============================================================================
+
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Logging;
@@ -13,12 +19,14 @@ public class EmailService : IEmailService
 
     public EmailService(IOptions<EmailSettings> options, ILogger<EmailService> logger)
     {
+        // Initialize required dependencies and services
         _settings = options.Value;
         _logger = logger;
     }
 
     public async Task SendUserWelcomeEmailAsync(string toEmail, string username, string password, string role)
     {
+        // Execute SendUserWelcomeEmailAsync operation logic
         var subject = "Smart Solar Microgrid - Account Created";
         var htmlBody = $@"
 <!DOCTYPE html>
@@ -85,6 +93,7 @@ public class EmailService : IEmailService
 
     public async Task SendEmailAsync(string toEmail, string subject, string htmlContent, string plainTextContent = "")
     {
+        // Execute SendEmailAsync operation logic
         _logger.LogInformation("Processing email to {ToEmail} with subject '{Subject}'", toEmail, subject);
 
         // If credentials are not configured, log email contents for developer/evaluator convenience

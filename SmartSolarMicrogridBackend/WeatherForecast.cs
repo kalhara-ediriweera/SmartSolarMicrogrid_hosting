@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: WeatherForecast.cs
+// Purpose: Core component for WeatherForecast within the SmartSolar microgrid platform.
+// ============================================================================
+
 namespace SmartSolarMicrogridBackend;
 
 public class WeatherForecast

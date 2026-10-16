@@ -97,8 +97,9 @@ public class ProsumerDashboardActivity extends BaseActivity {
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideLoading();
                 if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
-                JsonArray a = r.body().getAsJsonArray();
-                if (a.size() == 0) { toast("No available slots found."); return; }
+                JsonArray raw = r.body().getAsJsonArray();
+                JsonArray a = ApiUtils.filterBookableSlots(raw);
+                if (a.size() == 0) { toast("No upcoming slots found in the next 7 days."); return; }
 
                 String[] labels = new String[a.size()];
                 for (int i = 0; i < a.size(); i++) {
@@ -554,7 +555,7 @@ public class ProsumerDashboardActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        return d == (long) d ? String.valueOf((long) d) : String.valueOf(d);
+        return ApiUtils.fmt(d);
     }
 
     private String statusIcon(String status) {

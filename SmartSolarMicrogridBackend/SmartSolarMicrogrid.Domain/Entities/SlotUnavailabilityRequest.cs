@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: SlotUnavailabilityRequest.cs
+// Purpose: Domain entity representing SlotUnavailabilityRequest within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class SlotUnavailabilityRequest {
+
+public class SlotUnavailabilityRequest
+{
     public string Id { get; set; } = "";
     public string SlotId { get; set; } = "";
     public string NodeId { get; set; } = "";

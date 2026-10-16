@@ -21,7 +21,7 @@ import retrofit2.Response;
 public class OperatorDashboardActivity extends BaseActivity {
 
     private LinearLayout contentLayout;
-    private TextView tvStatPending, tvStatApproved, tvStatToday;
+    private TextView tvStatPending, tvStatApproved, tvStatToday, tvBranchName;
 
     private final ActivityResultLauncher<ScanOptions> scanLauncher =
             registerForActivityResult(new ScanContract(), result -> {
@@ -48,6 +48,7 @@ public class OperatorDashboardActivity extends BaseActivity {
         tvStatPending  = findViewById(R.id.tvStatPending);
         tvStatApproved = findViewById(R.id.tvStatApproved);
         tvStatToday    = findViewById(R.id.tvStatToday);
+        tvBranchName   = findViewById(R.id.tvBranchName);
         
         TextView tvUsername = findViewById(R.id.tvUsername);
         if (tvUsername != null) {
@@ -90,11 +91,30 @@ public class OperatorDashboardActivity extends BaseActivity {
             @Override
             public void onFailure(Call<JsonObject> c, Throwable t) { hideLoading(); }
         });
+
+        ApiClient.get().operatorMe().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
+                if (r.isSuccessful() && r.body() != null) {
+                    JsonObject me = r.body();
+                    String nodeName = ApiUtils.str(me, "nodeName");
+                    String nodeCode = ApiUtils.str(me, "nodeCode");
+                    if (!nodeName.isEmpty()) {
+                        tvBranchName.setText("📍 " + nodeName + " (" + nodeCode + ")");
+                    } else {
+                        tvBranchName.setText("⚠️ No branch assigned");
+                    }
+                }
+            }
+            @Override
+            public void onFailure(Call<JsonObject> c, Throwable t) {}
+        });
     }
 
     // ── QR Scanner ────────────────────────────────────────
     private void startScan() {
         ScanOptions opts = new ScanOptions();
+        opts.setCaptureActivity(CustomScannerActivity.class);
         opts.setPrompt("Scan Prosumer Transaction QR");
         opts.setBeepEnabled(true);
         opts.setOrientationLocked(false);
@@ -283,7 +303,7 @@ public class OperatorDashboardActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        return d == (long) d ? String.valueOf((long) d) : String.valueOf(d);
+        return ApiUtils.fmt(d);
     }
 
     private String statusIcon(String status) {

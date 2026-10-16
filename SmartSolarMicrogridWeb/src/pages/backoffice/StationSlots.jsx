@@ -6,6 +6,12 @@ import * as stationService from "../../services/stationService";
 import * as bookingService from "../../services/bookingService";
 import SlotRequestsPanel from "../../components/backoffice/SlotRequestsPanel";
 
+const fmtKwh = (v) => {
+    if (v == null || isNaN(v)) return "0";
+    const n = Number(v);
+    return Number.isInteger(n) ? n.toString() : Number(n.toFixed(3)).toString();
+};
+
 export default function Slots(){
     const empty = {nodeId:"",slotDate:"",startTime:"08:00",endTime:"09:00",energyAmountKwh:"",availableCapacityKwh:"",status:"Available"};
     const [f,setF]=useState(empty),[nodes,setN]=useState([]),[a,setA]=useState([]),[edit,setEdit]=useState(null),[originalSlot,setOriginalSlot]=useState(null),[err,setErr]=useState("");
@@ -78,7 +84,7 @@ export default function Slots(){
         // Check that total energy cannot be reduced below already reserved energy
         if (edit && originalSlot) {
             if (+f.energyAmountKwh < reservedAmount) {
-                setErr(`Cannot reduce total energy (${f.energyAmountKwh} kWh) below already reserved energy (${reservedAmount.toFixed(1)} kWh).`);
+                setErr(`Cannot reduce total energy (${fmtKwh(f.energyAmountKwh)} kWh) below already reserved energy (${fmtKwh(reservedAmount)} kWh).`);
                 return;
             }
         }
@@ -196,7 +202,7 @@ export default function Slots(){
                     />
                     {maxEnergyKwh !== null && (
                         <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
-                            Maximum for this slot: {maxEnergyKwh.toFixed(2)} kWh ({selectedNode.capacityKw} kW × {slotDurationHours} h).
+                            Maximum for this slot: {fmtKwh(maxEnergyKwh)} kWh ({fmtKwh(selectedNode.capacityKw)} kW × {slotDurationHours} h).
                         </span>
                     )}
                 </label>
@@ -216,7 +222,7 @@ export default function Slots(){
                                 }}
                             />
                             <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
-                                🔒 Automatically managed based on reservations ({reservedAmount > 0 ? `${reservedAmount.toFixed(1)} kWh currently reserved` : "No reservations yet"}).
+                                🔒 Automatically managed based on reservations ({reservedAmount > 0 ? `${fmtKwh(reservedAmount)} kWh currently reserved` : "No reservations yet"}).
                             </span>
                         </label>
                         <label>Status
@@ -295,8 +301,8 @@ export default function Slots(){
                                         </div>
                                     </td>
                                     <td>{s.startTime}–{s.endTime}</td>
-                                    <td>{s.energyAmountKwh} kWh</td>
-                                    <td>{s.availableCapacityKwh} kWh</td>
+                                    <td>{fmtKwh(s.energyAmountKwh)} kWh</td>
+                                    <td>{fmtKwh(s.availableCapacityKwh)} kWh</td>
                                     <td>
                                         <span className={`badge ${statusStr === "Available" ? "badge-active" : "badge-inactive"}`}>
                                             {statusStr}

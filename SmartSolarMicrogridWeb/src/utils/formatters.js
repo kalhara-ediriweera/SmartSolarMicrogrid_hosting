@@ -4,8 +4,11 @@ export function formatDate(value, locale = undefined) {
 }
 
 export function formatEnergy(value, unit = "kWh") {
+  if (value == null || value === "" || isNaN(value)) return "—";
   const amount = Number(value);
-  return Number.isFinite(amount) ? `${amount.toLocaleString()} ${unit}` : "—";
+  if (!Number.isFinite(amount)) return "—";
+  const formatted = Number.isInteger(amount) ? amount.toString() : Number(amount.toFixed(3)).toString();
+  return `${formatted} ${unit}`;
 }
 
 export function formatRole(role) {

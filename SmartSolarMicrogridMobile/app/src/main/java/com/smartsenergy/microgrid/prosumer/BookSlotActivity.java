@@ -93,7 +93,8 @@ public class BookSlotActivity extends BaseActivity {
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideLoading();
                 if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
-                JsonArray a = r.body().getAsJsonArray();
+                JsonArray raw = r.body().getAsJsonArray();
+                JsonArray a = ApiUtils.filterBookableSlots(raw);
                 slotsContainer.removeAllViews();
                 
                 if (a.size() == 0) {
@@ -105,9 +106,9 @@ public class BookSlotActivity extends BaseActivity {
                     TextView tv = new TextView(BookSlotActivity.this);
                     if (!filterNodeId.isEmpty()) {
                         String stName = !filterNodeName.isEmpty() ? filterNodeName : "this station";
-                        tv.setText("No available slots found for " + stName + " at this time.");
+                        tv.setText("No upcoming slots available for " + stName + " in the next 7 days.");
                     } else {
-                        tv.setText("No available slots found across all stations at this time.");
+                        tv.setText("No upcoming slots available across all stations in the next 7 days.");
                     }
                     tv.setTextSize(15f);
                     tv.setTextColor(Color.GRAY);
@@ -239,7 +240,6 @@ public class BookSlotActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        if (d == (long) d) return String.format(Locale.US, "%d", (long) d);
-        else return String.format(Locale.US, "%.1f", d);
+        return ApiUtils.fmt(d);
     }
 }

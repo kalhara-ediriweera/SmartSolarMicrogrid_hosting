@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IEmailService.cs
+// Purpose: Service contract defining operations and abstractions for Email.
+// ============================================================================
+
 namespace SmartSolarMicrogrid.Infrastructure.Interfaces;
 
 public interface IEmailService

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {Routes,Route,useLocation} from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import Login from "./pages/Login";
 import Navbar from "./components/common/Navbar";
@@ -15,29 +15,52 @@ import OperatorBookings from "./pages/operator/BookingManagement";
 import OperatorAvailability from "./pages/operator/StationSlots";
 import OperatorQR from "./pages/operator/QRVerification";
 
-function Shell({role}){
-    const l=useLocation();
+function Shell({ role }) {
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  useEffect(()=>{ setMobileOpen(false); }, [l.pathname]);
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 1024) {
-      setMobileOpen(prev => !prev);
+      setMobileOpen((prev) => !prev);
     } else {
-      setCollapsed(prev => !prev);
+      setCollapsed((prev) => !prev);
     }
   };
 
   return (
     <div className="app-shell">
-            <Sidebar role={role} mobileOpen={mobileOpen} collapsed={collapsed} onClose={()=>setMobileOpen(false)}/>
+      <Sidebar
+        role={role}
+        mobileOpen={mobileOpen}
+        collapsed={collapsed}
+        onClose={() => setMobileOpen(false)}
+      />
       <main className={`main ${collapsed ? "collapsed" : ""}`}>
-                <Navbar collapsed={collapsed} onToggle={toggleSidebar}/>
+        <Navbar collapsed={collapsed} onToggle={toggleSidebar} />
         <section>
           <Routes>
-            {role==="Backoffice"?<><Route index element={<BackofficeDashboard/>}/><Route path="users" element={<UserManagement/>}/><Route path="prosumers" element={<ProsumerManagement/>}/><Route path="stations" element={<StationManagement/>}/><Route path="slots" element={<BackofficeSlots/>}/><Route path="reservations" element={<ReservationManagement/>}/></>:<><Route index element={<OperatorDashboard/>}/><Route path="bookings" element={<OperatorBookings/>}/><Route path="availability" element={<OperatorAvailability/>}/><Route path="qr" element={<OperatorQR/>}/></>}
+            {role === "Backoffice" ? (
+              <>
+                <Route index element={<BackofficeDashboard />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="prosumers" element={<ProsumerManagement />} />
+                <Route path="stations" element={<StationManagement />} />
+                <Route path="slots" element={<BackofficeSlots />} />
+                <Route path="reservations" element={<ReservationManagement />} />
+              </>
+            ) : (
+              <>
+                <Route index element={<OperatorDashboard />} />
+                <Route path="bookings" element={<OperatorBookings />} />
+                <Route path="availability" element={<OperatorAvailability />} />
+                <Route path="qr" element={<OperatorQR />} />
+              </>
+            )}
           </Routes>
         </section>
       </main>
@@ -45,7 +68,12 @@ function Shell({role}){
   );
 }
 
-
-export default function App(){
-    return <AppRoutes LoginPage={Login} BackofficePage={()=> <Shell role="Backoffice"/>} OperatorPage={()=> <Shell role="GridOperator"/>}/>;
+export default function App() {
+  return (
+    <AppRoutes
+      LoginPage={Login}
+      BackofficePage={() => <Shell role="Backoffice" />}
+      OperatorPage={() => <Shell role="GridOperator" />}
+    />
+  );
 }

@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: EmailSettings.cs
+// Purpose: Core component for EmailSettings within the SmartSolar microgrid platform.
+// ============================================================================
+
 namespace SmartSolarMicrogrid.Infrastructure.Email;
 
 public class EmailSettings

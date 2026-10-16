@@ -222,8 +222,16 @@ public class BookingsActivity extends BaseActivity {
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideLoading();
                 if (!r.isSuccessful() || r.body() == null) { toast(errorMsg(r)); return; }
-                JsonArray slots = r.body().getAsJsonArray();
-                if (slots.size() == 0) { toast("No available slots to move this booking to."); return; }
+                JsonArray rawSlots = r.body().getAsJsonArray();
+                JsonArray slots = ApiUtils.filterBookableSlots(rawSlots);
+                if (slots.size() == 0) {
+                    new MaterialAlertDialogBuilder(BookingsActivity.this)
+                            .setTitle("No Available Slots")
+                            .setMessage("No upcoming energy slots available within the next 7 days to move this booking to.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                    return;
+                }
 
                 String[] labels = new String[slots.size()];
                 for (int i = 0; i < slots.size(); i++) {
@@ -345,7 +353,6 @@ public class BookingsActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        if (d == (long) d) return String.format(java.util.Locale.US, "%d", (long) d);
-        else return String.format(java.util.Locale.US, "%.1f", d);
+        return ApiUtils.fmt(d);
     }
 }

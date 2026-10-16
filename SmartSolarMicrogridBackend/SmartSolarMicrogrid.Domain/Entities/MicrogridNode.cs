@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: MicrogridNode.cs
+// Purpose: Domain entity representing MicrogridNode within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class MicrogridNode {
+
+public class MicrogridNode
+{
     public string? DeactivationReason { get; set; }
     public string Id { get; set; } = "";
     public string NodeCode { get; set; } = "";

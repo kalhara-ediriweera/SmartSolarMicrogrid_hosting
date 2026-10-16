@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: SeedData.cs
+// Purpose: Database seeder initializing baseline nodes, users, and configuration.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Entities;
 using SmartSolarMicrogrid.Domain.Enums;
 using SmartSolarMicrogrid.Infrastructure.MongoDB.Repositories;
@@ -9,6 +15,7 @@ public static class SeedData
 {
     public static async Task RunAsync(IServiceProvider sp)
     {
+        // Execute RunAsync operation logic
         using var scope = sp.CreateScope();
 
         var users = scope.ServiceProvider.GetRequiredService<UserRepository>();

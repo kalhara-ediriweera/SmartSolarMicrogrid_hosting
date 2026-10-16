@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: MicrogridNodesController.cs
+// Purpose: API controller providing REST endpoints for MicrogridNodes operations.
+// ============================================================================
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartSolarMicrogrid.Application.DTOs.Microgrid;
@@ -6,7 +12,8 @@ using SmartSolarMicrogrid.Application.Interfaces;
 namespace SmartSolarMicrogrid.API.Controllers;
 
 [ApiController, Route("api/microgrid-nodes")]
-public class MicrogridNodesController(IMicrogridNodeService service) : ControllerBase {
+public class MicrogridNodesController(IMicrogridNodeService service) : ControllerBase
+{
     [Authorize(Roles = "Backoffice"), HttpPost]
     public async Task<IActionResult> Create(CreateMicrogridNodeDto d) => Ok(await service.CreateAsync(d));
 
@@ -25,10 +32,14 @@ public class MicrogridNodesController(IMicrogridNodeService service) : Controlle
     [Authorize(Roles = "Backoffice"), HttpPut("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(string id, [FromBody] DeactivateMicrogridNodeDto? dto = null, [FromQuery] string? reason = null)
     {
-        try {
+        // Suspend active status and record deactivation reasoning
+        try
+        {
             var r = dto?.Reason ?? dto?.AdminNote ?? reason;
             return Ok(await service.DeactivateAsync(id, r));
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             return BadRequest(new { error = e.Message });
         }
     }
@@ -36,9 +47,13 @@ public class MicrogridNodesController(IMicrogridNodeService service) : Controlle
     [Authorize(Roles = "Backoffice"), HttpPut("{id}/activate")]
     public async Task<IActionResult> Activate(string id)
     {
-        try {
+        // Restore entity to active operational status
+        try
+        {
             return Ok(await service.ActivateAsync(id));
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             return BadRequest(new { error = e.Message });
         }
     }

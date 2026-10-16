@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IDrpVerificationService.cs
+// Purpose: Service contract defining operations and abstractions for DrpVerification.
+// ============================================================================
+
 namespace SmartSolarMicrogrid.Application.Interfaces;
 
 public record DrpVerificationResult(
@@ -10,6 +16,7 @@ public record DrpVerificationResult(
     string Message
 );
 
-public interface IDrpVerificationService {
+public interface IDrpVerificationService
+{
     Task<DrpVerificationResult> VerifyNicAsync(string nic, string fullName);
 }

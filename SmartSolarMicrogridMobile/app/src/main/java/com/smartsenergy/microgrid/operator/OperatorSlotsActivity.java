@@ -38,13 +38,30 @@ public class OperatorSlotsActivity extends BaseActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         loadSlots();
+        loadBranchInfo();
+    }
+
+    private void loadBranchInfo() {
+        ApiClient.get().operatorMe().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
+                if (r.isSuccessful() && r.body() != null) {
+                    String nodeName = ApiUtils.str(r.body(), "nodeName");
+                    if (!nodeName.isEmpty()) {
+                        TextView tvTitle = findViewById(R.id.tvTitle);
+                        tvTitle.setText((availableOnly ? "Available Slots" : "Update Slots") + " (" + nodeName + ")");
+                    }
+                }
+            }
+            @Override public void onFailure(Call<JsonObject> c, Throwable t) {}
+        });
     }
 
     private void loadSlots() {
         showLoading();
         slotsContainer.removeAllViews();
 
-        ApiClient.get().operatorSlots("", availableOnly).enqueue(new Callback<JsonElement>() {
+        ApiClient.get().operatorSlots(availableOnly).enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> c, Response<JsonElement> r) {
                 hideLoading();
@@ -59,10 +76,24 @@ public class OperatorSlotsActivity extends BaseActivity {
                     slotsContainer.addView(tv);
                     return;
                 }
-                JsonArray a = r.body().getAsJsonArray();
+                JsonArray raw = r.body().getAsJsonArray();
+                JsonArray a = raw;
+                if (availableOnly) {
+                    JsonArray filtered = new JsonArray();
+                    for (int i = 0; i < raw.size(); i++) {
+                        JsonObject s = raw.get(i).getAsJsonObject();
+                        if ("Available".equalsIgnoreCase(ApiUtils.str(s, "status")) && ApiUtils.num(s, "availableCapacityKwh") > 0) {
+                            filtered.add(s);
+                        }
+                    }
+                    a = filtered;
+                }
+
                 if (a.size() == 0) {
                     TextView tv = new TextView(OperatorSlotsActivity.this);
-                    tv.setText("No slots found.");
+                    tv.setText(availableOnly 
+                            ? "No available energy slots found for your assigned branch." 
+                            : "No energy slots found for your assigned branch.");
                     tv.setTextSize(16f);
                     tv.setTextColor(android.graphics.Color.GRAY);
                     tv.setPadding(32, 64, 32, 32);
@@ -185,6 +216,6 @@ public class OperatorSlotsActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        return d == (long) d ? String.valueOf((long) d) : String.valueOf(d);
+        return ApiUtils.fmt(d);
     }
 }

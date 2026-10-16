@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: EnergyReservation.cs
+// Purpose: Domain entity representing EnergyReservation within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class EnergyReservation {
+
+public class EnergyReservation
+{
     public string Id { get; set; } = "";
     public string ReservationCode { get; set; } = "";
     public string ProsumerId { get; set; } = "";

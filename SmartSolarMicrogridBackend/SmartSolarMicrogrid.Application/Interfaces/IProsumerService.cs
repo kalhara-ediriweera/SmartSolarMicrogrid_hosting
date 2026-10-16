@@ -1,1 +1,22 @@
-using SmartSolarMicrogrid.Application.DTOs.Prosumer; using SmartSolarMicrogrid.Domain.Entities; namespace SmartSolarMicrogrid.Application.Interfaces; public interface IProsumerService { Task<Prosumer> RegisterAsync(CreateProsumerDto dto); Task<Prosumer?> GetByNicAsync(string nic); Task<Prosumer> UpdateAsync(string nic, UpdateProsumerDto dto); Task<Prosumer> RequestDeactivationAsync(string nic); Task<IReadOnlyList<Prosumer>> GetPendingAsync(); Task<IReadOnlyList<Prosumer>> GetAllAsync(); Task<Prosumer> SetStatusAsync(string nic, string action); }
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IProsumerService.cs
+// Purpose: Contract for prosumer registration, identity verification, profile
+//          maintenance, and account lifecycle transitions.
+// ============================================================================
+
+using SmartSolarMicrogrid.Application.DTOs.Prosumer;
+using SmartSolarMicrogrid.Domain.Entities;
+
+namespace SmartSolarMicrogrid.Application.Interfaces;
+
+public interface IProsumerService
+{
+    Task<Prosumer> RegisterAsync(CreateProsumerDto dto);
+    Task<Prosumer?> GetByNicAsync(string nic);
+    Task<Prosumer> UpdateAsync(string nic, UpdateProsumerDto dto);
+    Task<Prosumer> RequestDeactivationAsync(string nic);
+    Task<IReadOnlyList<Prosumer>> GetPendingAsync();
+    Task<IReadOnlyList<Prosumer>> GetAllAsync();
+    Task<Prosumer> SetStatusAsync(string nic, string action);
+}

@@ -1,5 +1,13 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: MongoDbSettings.cs
+// Purpose: Core component for MongoDbSettings within the SmartSolar microgrid platform.
+// ============================================================================
+
 namespace SmartSolarMicrogrid.Infrastructure.MongoDB;
-public class MongoDbSettings {
+
+public class MongoDbSettings
+{
     public string ConnectionString { get; set; } = "mongodb://localhost:27017";
     public string DatabaseName { get; set; } = "SmartSolarMicrogridDB";
 }

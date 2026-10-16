@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: IUserService.cs
+// Purpose: Service contract defining operations and abstractions for User.
+// ============================================================================
+
 using SmartSolarMicrogrid.Application.DTOs.Users;
 
 namespace SmartSolarMicrogrid.Application.Interfaces;

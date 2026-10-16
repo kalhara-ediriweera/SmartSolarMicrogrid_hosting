@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: QRTransaction.cs
+// Purpose: Domain entity representing QRTransaction within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class QRTransaction {
+
+public class QRTransaction
+{
     public string Id { get; set; } = "";
     public string ReservationId { get; set; } = "";
     public string TransactionCode { get; set; } = "";

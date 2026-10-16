@@ -6,6 +6,11 @@ import BranchNotice from "../../components/operator/BranchNotice";
 import * as operatorService from "../../services/operatorService";
 
 const suggestions = ["Routine Maintenance", "Battery Fault", "Grid Repair", "Low Solar Output"];
+const fmtKwh = (v) => {
+    if (v == null || isNaN(v)) return "0";
+    const n = Number(v);
+    return Number.isInteger(n) ? n.toString() : Number(n.toFixed(3)).toString();
+};
 
 export default function Avail() {
     const [me, setMe] = useState(null), [a, setA] = useState([]), [reqs, setReqs] = useState([]);
@@ -35,8 +40,8 @@ export default function Avail() {
                         <tr key={s.id}>
                             <td>{new Date(s.slotDate).toLocaleDateString()}</td>
                             <td>{s.startTime}–{s.endTime}</td>
-                            <td>{s.energyAmountKwh} kWh</td>
-                            <td>{s.availableCapacityKwh} kWh</td>
+                            <td>{fmtKwh(s.energyAmountKwh)} kWh</td>
+                            <td>{fmtKwh(s.availableCapacityKwh)} kWh</td>
                             <td><span className={`badge ${s.status === "Available" ? "badge-active" : "badge-inactive"}`}>{s.status}</span></td>
                             <td>{s.status === "Unavailable"
                                 ? <span className="reason-pill" title={s.unavailableReason || "No reason provided"}><AlertTriangle size={12} />{s.unavailableReason || "No reason provided"}</span>

@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: GridOperator.cs
+// Purpose: Domain entity representing GridOperator within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class GridOperator {
+
+public class GridOperator
+{
     public string Id { get; set; } = "";
     public string UserId { get; set; } = "";
     public string EmployeeCode { get; set; } = "";

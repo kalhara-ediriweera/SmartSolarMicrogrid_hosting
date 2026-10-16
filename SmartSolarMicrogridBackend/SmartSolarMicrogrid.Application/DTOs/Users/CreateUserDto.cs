@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: CreateUserDto.cs
+// Purpose: Data transfer object representing CreateUser payload.
+// ============================================================================
+
 using System.ComponentModel.DataAnnotations;
 using SmartSolarMicrogrid.Domain.Enums;
 

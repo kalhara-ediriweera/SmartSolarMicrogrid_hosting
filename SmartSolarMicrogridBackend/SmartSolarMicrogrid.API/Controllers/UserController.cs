@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: UserController.cs
+// Purpose: API controller providing REST endpoints for User operations.
+// ============================================================================
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartSolarMicrogrid.Application.DTOs.Users;
@@ -15,6 +21,7 @@ public class UserController : ControllerBase
 
     public UserController(IUserService userService)
     {
+        // Initialize required dependencies and services
         _userService = userService;
     }
 
@@ -22,6 +29,7 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
     {
+        // Validate incoming parameters and persist new record
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -44,6 +52,7 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> GetInternalUsers()
     {
+        // Retrieve matching records from data store
         var users = await _userService.GetInternalUsersAsync();
         return Ok(users);
     }
@@ -52,6 +61,7 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto request)
     {
+        // Apply updates and synchronize changes to repository
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
@@ -78,6 +88,7 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> DeleteUser(string id)
     {
+        // Remove entity record and release associated allocations
         try
         {
             await _userService.DeleteUserAsync(id);
@@ -92,6 +103,7 @@ public class UserController : ControllerBase
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
     {
+        // Execute ChangePassword operation logic
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 

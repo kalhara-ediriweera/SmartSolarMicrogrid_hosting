@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: ReservationResponseDto.cs
+// Purpose: Data transfer object representing ReservationResponse payload.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Application.DTOs.Reservation;
 

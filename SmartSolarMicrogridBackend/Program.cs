@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: Program.cs
+// Purpose: Console entry point and runtime bootstrapping.
+// ============================================================================
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

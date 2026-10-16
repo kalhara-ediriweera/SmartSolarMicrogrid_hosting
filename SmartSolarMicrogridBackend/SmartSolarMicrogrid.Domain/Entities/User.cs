@@ -1,6 +1,14 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: User.cs
+// Purpose: Domain entity representing User within the solar microgrid system.
+// ============================================================================
+
 using SmartSolarMicrogrid.Domain.Enums;
 namespace SmartSolarMicrogrid.Domain.Entities;
-public class User {
+
+public class User
+{
     public string Id { get; set; } = "";
     public string Username { get; set; } = "";
     public string Email { get; set; } = "";

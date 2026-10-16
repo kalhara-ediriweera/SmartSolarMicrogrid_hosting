@@ -44,15 +44,30 @@ public class OperatorReservationsActivity extends BaseActivity {
         }
 
         loadReservations();
+        loadBranchInfo();
+    }
+
+    private void loadBranchInfo() {
+        ApiClient.get().operatorMe().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {
+                if (r.isSuccessful() && r.body() != null) {
+                    String nodeName = ApiUtils.str(r.body(), "nodeName");
+                    if (!nodeName.isEmpty()) {
+                        TextView tvTitle = findViewById(R.id.tvTitle);
+                        tvTitle.setText(("All".equalsIgnoreCase(statusFilter) ? "All Reservations" : statusFilter + " Reservations") + " (" + nodeName + ")");
+                    }
+                }
+            }
+            @Override public void onFailure(Call<JsonObject> c, Throwable t) {}
+        });
     }
 
     private void loadReservations() {
         showLoading();
         reservationsContainer.removeAllViews();
         
-        Call<JsonElement> call = "All".equalsIgnoreCase(statusFilter) 
-            ? ApiClient.get().allReservations() 
-            : ApiClient.get().reservationsByStatus(statusFilter);
+        Call<JsonElement> call = ApiClient.get().reservationsByStatus(statusFilter);
 
         call.enqueue(new Callback<JsonElement>() {
             @Override
@@ -72,7 +87,7 @@ public class OperatorReservationsActivity extends BaseActivity {
                 JsonArray a = r.body().getAsJsonArray();
                 if (a.size() == 0) {
                     TextView tv = new TextView(OperatorReservationsActivity.this);
-                    tv.setText("No " + statusFilter.toLowerCase() + " reservations found.");
+                    tv.setText("No " + statusFilter.toLowerCase() + " reservations found for your branch.");
                     tv.setTextSize(16f);
                     tv.setTextColor(android.graphics.Color.GRAY);
                     tv.setPadding(32, 64, 32, 32);
@@ -165,6 +180,6 @@ public class OperatorReservationsActivity extends BaseActivity {
     }
 
     private String fmt(double d) {
-        return d == (long) d ? String.valueOf((long) d) : String.valueOf(d);
+        return ApiUtils.fmt(d);
     }
 }

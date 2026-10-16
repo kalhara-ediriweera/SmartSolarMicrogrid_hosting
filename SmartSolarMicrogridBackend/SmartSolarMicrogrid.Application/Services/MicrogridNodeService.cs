@@ -1,3 +1,9 @@
+// ============================================================================
+// SmartSolar Microgrid System
+// File: MicrogridNodeService.cs
+// Purpose: Business logic service coordinating workflows and validation for MicrogridNode.
+// ============================================================================
+
 using SmartSolarMicrogrid.Application.DTOs.Microgrid;
 using SmartSolarMicrogrid.Application.Interfaces;
 using SmartSolarMicrogrid.Application.Validators;
@@ -7,25 +13,31 @@ using SmartSolarMicrogrid.Infrastructure.MongoDB.Repositories;
 
 namespace SmartSolarMicrogrid.Application.Services;
 
-public class MicrogridNodeService : IMicrogridNodeService {
+public class MicrogridNodeService : IMicrogridNodeService
+{
     private readonly MicrogridNodeRepository _nodes;
     private readonly EnergyReservationRepository _reservations;
     private readonly EnergySlotRepository _slots;
 
-    public MicrogridNodeService(MicrogridNodeRepository nodes, EnergyReservationRepository reservations, EnergySlotRepository slots) {
+    public MicrogridNodeService(MicrogridNodeRepository nodes, EnergyReservationRepository reservations, EnergySlotRepository slots)
+    {
+        // Initialize required dependencies and services
         _nodes = nodes;
         _reservations = reservations;
         _slots = slots;
     }
 
-    public async Task<MicrogridNode> CreateAsync(CreateMicrogridNodeDto d) {
+    public async Task<MicrogridNode> CreateAsync(CreateMicrogridNodeDto d)
+    {
+        // Validate incoming parameters and persist new record
         Validation.Required(d.NodeCode, "NodeCode");
         Validation.Required(d.NodeName, "NodeName");
         Validation.Positive(d.CapacityKw, "CapacityKw");
         Validation.LatitudeLongitude(d.Latitude, d.Longitude);
         if ((await _nodes.GetAllAsync()).Any(x => x.NodeCode.Equals(d.NodeCode, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("Node code already exists.");
-        var n = new MicrogridNode {
+        var n = new MicrogridNode
+        {
             Id = Guid.NewGuid().ToString(),
             NodeCode = d.NodeCode,
             NodeName = d.NodeName,
@@ -40,14 +52,18 @@ public class MicrogridNodeService : IMicrogridNodeService {
         return n;
     }
 
-    public async Task<IReadOnlyList<MicrogridNode>> GetAllAsync(bool activeOnly = false) {
+    public async Task<IReadOnlyList<MicrogridNode>> GetAllAsync(bool activeOnly = false)
+    {
+        // Retrieve matching records from data store
         var x = await _nodes.GetAllAsync();
         return activeOnly ? x.Where(n => n.Status == NodeStatus.Active).ToList() : x;
     }
 
     public Task<MicrogridNode?> GetAsync(string id) => _nodes.GetByIdAsync(id);
 
-    public async Task<MicrogridNode> UpdateAsync(string id, UpdateMicrogridNodeDto d) {
+    public async Task<MicrogridNode> UpdateAsync(string id, UpdateMicrogridNodeDto d)
+    {
+        // Apply updates and synchronize changes to repository
         var n = await _nodes.GetByIdAsync(id) ?? throw new KeyNotFoundException("Node not found.");
         Validation.Positive(d.CapacityKw, "CapacityKw");
         Validation.LatitudeLongitude(d.Latitude, d.Longitude);
@@ -63,7 +79,9 @@ public class MicrogridNodeService : IMicrogridNodeService {
         return n;
     }
 
-    public async Task<MicrogridNode> DeactivateAsync(string id, string? reason = null) {
+    public async Task<MicrogridNode> DeactivateAsync(string id, string? reason = null)
+    {
+        // Suspend active status and record deactivation reasoning
         var n = await _nodes.GetByIdAsync(id) ?? throw new KeyNotFoundException("Node not found.");
         if (string.IsNullOrWhiteSpace(reason))
             throw new InvalidOperationException("Admin note / reason is required for deactivation.");
@@ -79,7 +97,8 @@ public class MicrogridNodeService : IMicrogridNodeService {
 
         // Lock all existing available slots for this node to Unavailable
         var slots = (await _slots.GetAllAsync()).Where(s => s.NodeId == id && s.Status == SlotStatus.Available).ToList();
-        foreach (var s in slots) {
+        foreach (var s in slots)
+        {
             s.Status = SlotStatus.Unavailable;
             s.UpdatedAt = DateTime.UtcNow;
             await _slots.ReplaceAsync(s.Id, s);
@@ -88,7 +107,9 @@ public class MicrogridNodeService : IMicrogridNodeService {
         return n;
     }
 
-    public async Task<MicrogridNode> ActivateAsync(string id) {
+    public async Task<MicrogridNode> ActivateAsync(string id)
+    {
+        // Restore entity to active operational status
         var n = await _nodes.GetByIdAsync(id) ?? throw new KeyNotFoundException("Node not found.");
         n.Status = NodeStatus.Active;
         n.DeactivationReason = null;
@@ -98,7 +119,9 @@ public class MicrogridNodeService : IMicrogridNodeService {
         return n;
     }
 
-    public async Task<MicrogridNode> UpdateScheduleAsync(string id, string start, string end) {
+    public async Task<MicrogridNode> UpdateScheduleAsync(string id, string start, string end)
+    {
+        // Apply updates and synchronize changes to repository
         var n = await _nodes.GetByIdAsync(id) ?? throw new KeyNotFoundException("Node not found.");
         n.ScheduleStart = start;
         n.ScheduleEnd = end;

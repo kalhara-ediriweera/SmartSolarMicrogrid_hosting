@@ -48,7 +48,8 @@ public class UserService : IUserService
             Email = cleanEmail,
             PasswordHash = _hasher.Hash(request.Password),
             Role = request.Role,
-            Status = request.Status,
+            // Ensure newly created internal users are Active
+            Status = UserStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

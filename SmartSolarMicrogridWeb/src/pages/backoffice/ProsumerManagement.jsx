@@ -19,6 +19,17 @@ export default function Pros(){
         if (action === "activate") setSt("Active");
         if (action === "reject") setSt("Rejected");
     };
+    const confirmStatusChange = (prosumer, action) => {
+        const messages = {
+            "deactivate": `Warning: Deactivating ${prosumer.fullName} will prevent this prosumer from using the system. Continue?`,
+            "reactivate": `Warning: Reactivating ${prosumer.fullName} will allow this prosumer to use the system again. Continue?`,
+            "verify-nic": `Warning: This will mark the NIC for ${prosumer.fullName} as verified. Continue?`,
+            "reject": `Warning: Rejecting ${prosumer.fullName}'s NIC will prevent approval of this prosumer. Continue?`,
+        };
+        if (window.confirm(messages[action] || `Warning: Change ${prosumer.fullName}'s status? Continue?`)) {
+            act(prosumer.nic, action);
+        }
+    };
     const filtered = a.filter(p => 
         st === "Pending" ? (p.accountStatus === 0 || p.accountStatus === "Pending") : 
         st === "Active" ? (p.accountStatus === 1 || p.accountStatus === "Active") : 
@@ -101,8 +112,8 @@ export default function Pros(){
                             Verify Solar
                         </label>
                     )}
-                    {st === "Active" && <button className="btn-delete" onClick={() => act(p.nic, "deactivate")}>Deactivate</button>}
-                    {st === "Inactive" && <button className="btn-success" onClick={() => act(p.nic, "reactivate")}>Reactivate</button>}
+                    {st === "Active" && <button className="btn-delete" onClick={() => confirmStatusChange(p, "deactivate")}>Deactivate</button>}
+                    {st === "Inactive" && <button className="btn-success" onClick={() => confirmStatusChange(p, "reactivate")}>Reactivate</button>}
                 </td>
             </tr>)}</tbody>
         </table>
@@ -158,18 +169,14 @@ export default function Pros(){
                         <>
                         <button 
                             className="btn-success" 
-                            onClick={() => act(viewNic.nic, "verify-nic")} 
+                            onClick={() => confirmStatusChange(viewNic, "verify-nic")} 
                             style={{flex: 1, padding: '12px', fontSize: '15px', cursor: 'pointer', borderRadius: '8px'}}
                         >
                             Verify NIC
                         </button>
                         <button 
                             className="btn-delete" 
-                            onClick={() => {
-                                if (window.confirm("Are you sure you want to reject this NIC?")) {
-                                    act(viewNic.nic, "reject");
-                                }
-                            }} 
+                            onClick={() => confirmStatusChange(viewNic, "reject")} 
                             style={{flex: 1, padding: '12px', fontSize: '15px', cursor: 'pointer', borderRadius: '8px'}}
                         >
                             Reject NIC
